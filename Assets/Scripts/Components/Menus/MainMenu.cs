@@ -8,10 +8,15 @@ namespace Assets.Scripts.Components.Menus
 {
     public class MainMenu : Fadeable
     {
+
+        public SaveSelectionMenu saveSelectionMenu;
+
         // Start is called before the first frame update
         void Start()
         {
-
+            saveSelectionMenu = transform.parent.GetComponentInChildren<SaveSelectionMenu>();
+            saveSelectionMenu.mainMenu = this;
+            saveSelectionMenu.gameObject.SetActive(true);
         }
 
         // Update is called once per frame
@@ -30,12 +35,14 @@ namespace Assets.Scripts.Components.Menus
 
         public void Singleplayer()
         {
-            FadeOut();
+            saveSelectionMenu.multiplayer = false;
+            TransitionToSaveSelectionMenu();
         }
 
         public void HostGame()
         {
-            FadeOut();
+            saveSelectionMenu.multiplayer = true;
+            TransitionToSaveSelectionMenu();
         }
 
         public void JoinGame()
@@ -45,11 +52,19 @@ namespace Assets.Scripts.Components.Menus
 
         public void Quit()
         {
+            FadeOut(onFadeComplete: () =>
+            {
 #if UNITY_EDITOR
-            UnityEditor.EditorApplication.isPlaying = false;
+                UnityEditor.EditorApplication.isPlaying = false;
 #else
-            Application.Quit();
+                Application.Quit();
 #endif
+            });
+        }
+
+        void TransitionToSaveSelectionMenu()
+        {
+            FadeOut(onFadeComplete: () => saveSelectionMenu.FadeIn());
         }
     }
 }
