@@ -1,11 +1,12 @@
+using Assets.Scripts.Components.Misc;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Components.Menus
+namespace Assets.Scripts.Components.Menus
 {
-    public class MainMenu : MonoBehaviour
+    public class MainMenu : Fadeable
     {
         // Start is called before the first frame update
         void Start()
@@ -24,27 +25,22 @@ namespace Components.Menus
         /// </summary>
         public void Enter()
         {
-            //Fade in UI
-            foreach (Graphic graphic in GetComponentsInChildren<Graphic>())
-            {
-                graphic.canvasRenderer.SetAlpha(0);
-                graphic.CrossFadeAlpha(1, 1, true);
-            }
+            FadeIn();
         }
 
         public void Singleplayer()
         {
-
+            FadeOut();
         }
 
         public void HostGame()
         {
-
+            FadeOut();
         }
 
         public void JoinGame()
         {
-
+            FadeOut();
         }
 
         public void Quit()

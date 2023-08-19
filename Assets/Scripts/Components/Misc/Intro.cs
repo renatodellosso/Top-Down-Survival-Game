@@ -1,10 +1,10 @@
-using Components.Menus;
+using Assets.Scripts.Components.Menus;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Components.Misc
+namespace Assets.Scripts.Components.Misc
 {
     public class Intro : MonoBehaviour
     {
@@ -27,8 +27,11 @@ namespace Components.Misc
         // Start is called before the first frame update
         void Start()
         {
-            if(introPlayed)
+            if (introPlayed)
+            {
+                menu.FadeIn();
                 Destroy(gameObject);
+            }
             else
             {
                 print("Starting intro...");
@@ -50,7 +53,10 @@ namespace Components.Misc
         void Update()
         {
             if (Input.anyKeyDown)
+            {
                 speed *= 2;
+                FadeOut();
+            }
         }
 
         void FadeIn()
