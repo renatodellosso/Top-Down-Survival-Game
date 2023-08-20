@@ -20,6 +20,9 @@ namespace Assets.Scripts.Components.Misc
 
         public void FadeIn(float duration = DEFAULT_FADE_DURATION, Action? onFadeComplete = null)
         {
+            if(!gameObject.activeSelf)
+                gameObject.SetActive(true);
+
             //Enable children
             foreach (Transform t in transform.GetComponentsInChildren<Transform>(includeInactive: true))
             {
@@ -52,6 +55,8 @@ namespace Assets.Scripts.Components.Misc
                         if (t != transform)
                             t.gameObject.SetActive(false);
                     }
+
+                    gameObject.SetActive(false);
                 };
             }
             

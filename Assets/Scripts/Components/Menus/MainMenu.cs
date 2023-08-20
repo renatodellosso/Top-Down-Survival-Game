@@ -14,9 +14,8 @@ namespace Assets.Scripts.Components.Menus
         // Start is called before the first frame update
         void Start()
         {
-            saveSelectionMenu = transform.parent.GetComponentInChildren<SaveSelectionMenu>();
-            saveSelectionMenu.mainMenu = this;
-            saveSelectionMenu.gameObject.SetActive(true);
+            saveSelectionMenu = transform.parent.GetComponentInChildren<SaveSelectionMenu>(includeInactive: true);
+            saveSelectionMenu.previousMenu = this;
         }
 
         // Update is called once per frame

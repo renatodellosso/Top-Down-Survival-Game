@@ -5,33 +5,23 @@ using UnityEngine;
 
 namespace Assets.Scripts.Components.Menus
 {
-    public class SaveSelectionMenu : Fadeable
+    public class SaveSelectionMenu : ExitableMenu
     {
 
-        public MainMenu mainMenu;
+        public NewGameMenu newGameMenu;
 
         public bool multiplayer = false;
 
         // Start is called before the first frame update
         void Start()
         {
-            FadeOut(0);
-        }
-
-        // Update is called once per frame
-        void Update()
-        {
-
-        }
-
-        public void Back()
-        {
-            FadeOut(onFadeComplete: () => mainMenu.FadeIn());
+            newGameMenu = transform.parent.GetComponentInChildren<NewGameMenu>(includeInactive: true);
+            newGameMenu.previousMenu = this;
         }
 
         public void NewGame()
         {
-
+            FadeOut(onFadeComplete: () => newGameMenu.FadeIn());
         }
     }
 }
