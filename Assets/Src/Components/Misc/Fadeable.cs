@@ -7,7 +7,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 #nullable enable //We need this for ?
-namespace Assets.Scripts.Components.Misc
+namespace Assets.Src.Components.Misc
 {
     public class Fadeable : MonoBehaviour
     {

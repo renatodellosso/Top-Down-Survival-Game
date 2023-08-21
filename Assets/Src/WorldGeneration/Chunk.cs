@@ -4,9 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Assets.Scripts
+#nullable enable
+namespace Assets.Src.WorldGeneration
 {
-    public static class SaveManager
+    public class Chunk
     {
 
     }

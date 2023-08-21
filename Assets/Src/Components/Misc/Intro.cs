@@ -1,10 +1,10 @@
-using Assets.Scripts.Components.Menus;
+using Assets.Src.Components.Menus;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Assets.Scripts.Components.Misc
+namespace Assets.Src.Components.Misc
 {
     public class Intro : MonoBehaviour
     {

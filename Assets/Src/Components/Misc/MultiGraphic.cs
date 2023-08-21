@@ -6,7 +6,7 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Assets.Scripts.Components.Misc
+namespace Assets.Src.Components.Misc
 {
     public class MultiGraphic : Graphic
     {
