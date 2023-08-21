@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Burst.CompilerServices;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -15,10 +16,11 @@ namespace Assets.Scripts.Components.Misc
 
             color = new Color(targetColor.r, targetColor.g, targetColor.b, 0);
 
-            print("Fading multiple graphics to " + targetColor + ", duration: " + duration);
+            //print("Fading multiple graphics to " + targetColor + ", duration: " + duration);
             
 
-            IEnumerable<Graphic> graphics = transform.GetComponentsInChildren<Graphic>().Where(g => g.CompareTag("Transition") || g.transform.parent.CompareTag("Transition"));
+            IEnumerable<Graphic> graphics = transform.GetComponentsInChildren<Graphic>().Where(g => g.CompareTag("Transition") || 
+                (g.transform.parent != null && g.transform.parent.CompareTag("Transition")));
             foreach (var graphic in graphics)
             {
                 graphic.CrossFadeColor(targetColor, duration, true, true);
@@ -27,7 +29,7 @@ namespace Assets.Scripts.Components.Misc
 
         protected override void OnEnable()
         {
-            print("Enabling multiple graphics");
+            //print("Enabling multiple graphics");
             CrossFadeColor(new Color(color.r, color.g, color.b, 1), 0, true, true);
         }
     }
