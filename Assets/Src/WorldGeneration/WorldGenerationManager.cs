@@ -17,6 +17,11 @@ namespace Assets.Src.WorldGeneration
 
         static World world;
 
+        public static Func<Color[,]> getDisplayColors = () =>
+        {
+            return new Color[size, size];
+        };
+
         public static void StartGenerationAsync(int size)
         {
             WorldGenerationManager.size = size;

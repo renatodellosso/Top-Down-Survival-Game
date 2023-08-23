@@ -1,5 +1,6 @@
 using Assets.Src.Components.Menus;
 using Assets.Src.Components.Misc;
+using Assets.Src.WorldGeneration;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,6 +21,8 @@ namespace Assets.Src.Components.Menus
         TMP_InputField nameInput, worldSizeInput, chunkSizeInput;
         TMP_Dropdown worldSizeDropdown, chunkSizeDropdown;
         Button confirmButton;
+
+        Image worldGenerationDisplay;
 
         const int MIN_WORLD_SIZE = 20, MAX_WORLD_SIZE = 1000;
 
@@ -141,6 +144,9 @@ namespace Assets.Src.Components.Menus
 
             //Set up button
             confirmButton.onClick.AddListener(StartGeneration);
+            
+            //Set up world generation display
+            worldGenerationDisplay = GetComponentsInChildren<Image>().Where(i => i.name == "World Map Display").First();
         }
 
         void OnWorldSizeDropdownChanged(int value)
@@ -190,6 +196,8 @@ namespace Assets.Src.Components.Menus
 
                 WorldGenerationManager.StartGenerationAsync(WorldSize);
                 WorldGenerationManager.task.ContinueWith((task) => OnWorldGenerationComplete());
+
+                //Set up world generation display
             }
             else StartCoroutine(FlashWorldNameInput()); //No name specified, alert the user
         }
@@ -203,6 +211,26 @@ namespace Assets.Src.Components.Menus
                 nameInput.interactable = true;
                 yield return new WaitForSeconds(0.1f);
             }
+        }
+
+        IEnumerator WhileWorldGenerating()
+        {
+            while(!WorldGenerationManager.task.IsCompleted)
+            {
+                Color[,] worldMapDisplayColors = WorldGenerationManager.getDisplayColors();
+                Texture2D texture = new(worldGenerationDisplay.mainTexture.width, worldGenerationDisplay.mainTexture.height);
+
+                for (int x = 0; x < worldMapDisplayColors.GetLength(0); x++)
+                    for (int y = 0; y < worldMapDisplayColors.GetLength(1); y++)
+                        texture.SetPixel(x, y, Color.red);
+
+                worldGenerationDisplay.material.mainTexture = texture;
+                texture.Apply();
+
+                yield return new WaitForSeconds(0.5f);
+            }
+
+            OnWorldGenerationComplete();
         }
 
         void OnWorldGenerationComplete()
