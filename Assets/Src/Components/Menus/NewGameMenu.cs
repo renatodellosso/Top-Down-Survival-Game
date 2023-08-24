@@ -195,9 +195,11 @@ namespace Assets.Src.Components.Menus
                 chunkSizeInput.interactable = false;
 
                 WorldGenerationManager.StartGenerationAsync(WorldSize);
-                WorldGenerationManager.task.ContinueWith((task) => OnWorldGenerationComplete());
 
                 //Set up world generation display
+
+                //Start coroutine to update the display
+                StartCoroutine(WhileWorldGenerating());
             }
             else StartCoroutine(FlashWorldNameInput()); //No name specified, alert the user
         }
@@ -215,20 +217,32 @@ namespace Assets.Src.Components.Menus
 
         IEnumerator WhileWorldGenerating()
         {
-            while(!WorldGenerationManager.task.IsCompleted)
+            do
             {
-                Color[,] worldMapDisplayColors = WorldGenerationManager.getDisplayColors();
-                Texture2D texture = new(worldGenerationDisplay.mainTexture.width, worldGenerationDisplay.mainTexture.height);
+                //Convert the world map to an array of colors
+                Color32[,] worldMapDisplayColors = WorldGenerationManager.GetDisplayColors();
+                Color32[] mapColors = new Color32[worldMapDisplayColors.GetLength(0) * worldMapDisplayColors.GetLength(1)];
 
                 for (int x = 0; x < worldMapDisplayColors.GetLength(0); x++)
                     for (int y = 0; y < worldMapDisplayColors.GetLength(1); y++)
-                        texture.SetPixel(x, y, Color.red);
+                        //Set the color at the index to the color at the x and y position
+                        // x * worldMapDisplayColors.GetLength(0) adds the x offset for that row
+                        mapColors[(x * worldMapDisplayColors.GetLength(0)) + y] = worldMapDisplayColors[x, y];
 
-                worldGenerationDisplay.material.mainTexture = texture;
-                texture.Apply();
+                //Create a texture from the colors
+                Texture2D texture = new(worldMapDisplayColors.GetLength(0), worldMapDisplayColors.GetLength(1), TextureFormat.ARGB32, false);
+                texture.SetPixels32(mapColors, 0);
+                
+                //worldGenerationDisplay.material.mainTexture = texture;
+                
+                //We have to make a new sprite for the texture
+                worldGenerationDisplay.sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0, 0));
+
+                texture.Apply(); //Upload the changes to the GPU
 
                 yield return new WaitForSeconds(0.5f);
             }
+            while (!WorldGenerationManager.task.IsCompleted);
 
             OnWorldGenerationComplete();
         }
