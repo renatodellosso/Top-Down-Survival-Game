@@ -219,37 +219,44 @@ namespace Assets.Src.Components.Menus
         {
             do
             {
-                //Convert the world map to an array of colors
-                Color32[,] worldMapDisplayColors = WorldGenerationManager.GetDisplayColors();
-                Color32[] mapColors = new Color32[worldMapDisplayColors.GetLength(0) * worldMapDisplayColors.GetLength(1)];
-
-                for (int x = 0; x < worldMapDisplayColors.GetLength(0); x++)
-                    for (int y = 0; y < worldMapDisplayColors.GetLength(1); y++)
-                        //Set the color at the index to the color at the x and y position
-                        // x * worldMapDisplayColors.GetLength(0) adds the x offset for that row
-                        mapColors[(x * worldMapDisplayColors.GetLength(0)) + y] = worldMapDisplayColors[x, y];
-
-                //Create a texture from the colors
-                Texture2D texture = new(worldMapDisplayColors.GetLength(0), worldMapDisplayColors.GetLength(1), TextureFormat.ARGB32, false);
-                texture.SetPixels32(mapColors, 0);
-                
-                //worldGenerationDisplay.material.mainTexture = texture;
-                
-                //We have to make a new sprite for the texture
-                worldGenerationDisplay.sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0, 0));
-
-                texture.Apply(); //Upload the changes to the GPU
-
+                UpdateWorldMapDisplay();
                 yield return new WaitForSeconds(0.5f);
             }
             while (!WorldGenerationManager.task.IsCompleted);
 
+            print("Chunk 0, 0: " + World.instance.GetChunk(0, 0).RelativePos);
+
+            UpdateWorldMapDisplay();
             OnWorldGenerationComplete();
         }
 
         void OnWorldGenerationComplete()
         {
             print("World generation complete!");
+        }
+
+        void UpdateWorldMapDisplay()
+        {
+            //Convert the world map to an array of colors
+            Color32[,] worldMapDisplayColors = WorldGenerationManager.GetDisplayColors();
+            Color32[] mapColors = new Color32[worldMapDisplayColors.GetLength(0) * worldMapDisplayColors.GetLength(1)];
+
+            for (int x = 0; x < worldMapDisplayColors.GetLength(0); x++)
+                for (int y = 0; y < worldMapDisplayColors.GetLength(1); y++)
+                    //Set the color at the index to the color at the x and y position
+                    // x * worldMapDisplayColors.GetLength(0) adds the x offset for that row
+                    mapColors[(x * worldMapDisplayColors.GetLength(0)) + y] = worldMapDisplayColors[x, y];
+
+            //Create a texture from the colors
+            Texture2D texture = new(worldMapDisplayColors.GetLength(0), worldMapDisplayColors.GetLength(1), TextureFormat.ARGB32, false);
+            texture.SetPixels32(mapColors, 0);
+
+            //worldGenerationDisplay.material.mainTexture = texture;
+
+            //We have to make a new sprite for the texture
+            worldGenerationDisplay.sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0, 0));
+
+            texture.Apply(); //Upload the changes to the GPU
         }
 
     }

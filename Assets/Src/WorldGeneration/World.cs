@@ -11,15 +11,23 @@ namespace Assets.Src.WorldGeneration
     public class World
     {
 
+        public static World? instance;
+
         /// <summary>
-        /// Avoid ccessing this directly, use <see cref="GetChunk(int, int)"/> instead
+        /// Avoid accessing this directly, use <see cref="GetChunk(int, int)"/> instead
         /// </summary>
         public Chunk[,]? chunks;
 
         public World(int size)
         {
+            instance = this;
+
             //Init chunks
             chunks = new Chunk[size, size];
+
+            for(int x = 0; x < size; x++)
+                for(int y = 0; y < size; y++)
+                    chunks[x, y] = new Chunk(size, new(x, y));
         }
 
         public Chunk? GetChunk(int x, int y)
