@@ -224,15 +224,8 @@ namespace Assets.Src.Components.Menus
             }
             while (!WorldGenerationManager.task.IsCompleted);
 
-            print("Chunk 0, 0: " + World.instance.GetChunk(0, 0).RelativePos);
-
             UpdateWorldMapDisplay();
             OnWorldGenerationComplete();
-        }
-
-        void OnWorldGenerationComplete()
-        {
-            print("World generation complete!");
         }
 
         void UpdateWorldMapDisplay()
@@ -250,6 +243,7 @@ namespace Assets.Src.Components.Menus
             //Create a texture from the colors
             Texture2D texture = new(worldMapDisplayColors.GetLength(0), worldMapDisplayColors.GetLength(1), TextureFormat.ARGB32, false);
             texture.SetPixels32(mapColors, 0);
+            texture.filterMode = FilterMode.Point;
 
             //worldGenerationDisplay.material.mainTexture = texture;
 
@@ -257,6 +251,22 @@ namespace Assets.Src.Components.Menus
             worldGenerationDisplay.sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0, 0));
 
             texture.Apply(); //Upload the changes to the GPU
+        }
+
+        void OnWorldGenerationComplete()
+        {
+            print("World generation complete!");
+
+            //Set settings to not interactable
+            confirmButton.interactable = true;
+
+            nameInput.interactable = true;
+
+            worldSizeDropdown.interactable = true;
+            worldSizeInput.interactable = true;
+
+            chunkSizeDropdown.interactable = true;
+            chunkSizeInput.interactable = true;
         }
 
     }

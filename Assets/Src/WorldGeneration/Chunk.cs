@@ -11,7 +11,11 @@ namespace Assets.Src.WorldGeneration
     public class Chunk
     {
 
-        public Vector2 pos;
+        public Vector2 Pos
+        {
+            protected set;
+            get;
+        }
 
         /// <summary>
         /// Percentage of the way to the world border
@@ -23,11 +27,14 @@ namespace Assets.Src.WorldGeneration
 
         public float temperature, moisture, rockiness;
 
+        protected string biomeId = "";
+        public Biome? Biome => BiomeList.Get(biomeId);
+
         public Chunk(int worldSize, Vector2 pos)
         {
             try
             {
-                this.pos = pos;
+                this.Pos = pos;
 
                 //Calculate relative pos
                 float equator = worldSize / 2f;
@@ -38,15 +45,30 @@ namespace Assets.Src.WorldGeneration
             }
             catch (Exception e)
             {
-                UnityEngine.Debug.LogError($"Failed to create chunk at {pos}: {e}");
+                Utils.Log(e, $"Failed to create chunk at {pos}");
             }
         }
 
         public void GenerateInitialStats()
         {
-            temperature = Utils.RandFloat(0, 1) + RelativePos.Y;
+            temperature = Utils.RandFloat(0, 1) + World.instance!.Hemisphere * RelativePos.Y;
             moisture = Utils.RandFloat(0, 1);
             rockiness = Utils.RandFloat(0, 1);
+        }
+
+        public void DetermineBiome()
+        {
+            KeyValuePair<string, float> bestBiomeMatch = new("", float.MaxValue);
+
+            foreach(Biome biome in BiomeList.BIOMES.Values)
+            {
+                float score = biome.GetRelativeScore(this);
+
+                if (score < bestBiomeMatch.Value)
+                    bestBiomeMatch = new(biome.Id, score);
+            }
+
+            biomeId = bestBiomeMatch.Key;
         }
 
     }
