@@ -4,6 +4,7 @@ using System.Linq;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
+using UnityEngine;
 
 #nullable enable
 namespace Assets.Src.WorldGeneration
@@ -11,7 +12,7 @@ namespace Assets.Src.WorldGeneration
     public class Chunk
     {
 
-        public Vector2 Pos
+        public UnityEngine.Vector2 Pos
         {
             protected set;
             get;
@@ -20,7 +21,7 @@ namespace Assets.Src.WorldGeneration
         /// <summary>
         /// Percentage of the way to the world border
         /// </summary>
-        public Vector2 RelativePos {
+        public UnityEngine.Vector2 RelativePos {
             protected set;
             get;
         }
@@ -30,7 +31,7 @@ namespace Assets.Src.WorldGeneration
         protected string biomeId = "";
         public Biome? Biome => BiomeList.Get(biomeId);
 
-        public Chunk(int worldSize, Vector2 pos)
+        public Chunk(int worldSize, UnityEngine.Vector2 pos)
         {
             try
             {
@@ -38,10 +39,10 @@ namespace Assets.Src.WorldGeneration
 
                 //Calculate relative pos
                 float equator = worldSize / 2f;
-                RelativePos = new Vector2(
+                RelativePos = new UnityEngine.Vector2(
                     //Distance from midpoint, divided from the distance to the border from the midpoint
-                    (pos.X - equator) / equator,
-                    (pos.Y - equator) / equator);
+                    (pos.x - equator) / equator,
+                    (pos.y - equator) / equator);
             }
             catch (Exception e)
             {
@@ -51,7 +52,7 @@ namespace Assets.Src.WorldGeneration
 
         public void GenerateInitialStats()
         {
-            temperature = Utils.RandFloat(0, 1) + World.instance!.Hemisphere * RelativePos.Y;
+            temperature = Utils.RandFloat(0, 1) + World.instance!.Hemisphere * RelativePos.y;
             moisture = Utils.RandFloat(0, 1);
             rockiness = Utils.RandFloat(0, 1);
         }
@@ -69,6 +70,11 @@ namespace Assets.Src.WorldGeneration
             }
 
             biomeId = bestBiomeMatch.Key;
+        }
+
+        public Color32 GetMapColor()
+        {
+            return Biome?.GetColor(this) ?? new Color32(170, 170, 170, 255);
         }
 
     }

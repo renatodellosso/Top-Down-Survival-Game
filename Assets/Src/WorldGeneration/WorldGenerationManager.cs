@@ -40,10 +40,13 @@ namespace Assets.Src.WorldGeneration
 
             //Generate chunk stats
             GenerateInitialChunkStats();
-            SmoothChunkStats(SMOOTHING_ITERATIONS);
-            NormalizeChunkStats();
+            GenerateFinalChunkStats();
+
+            getChunkColor = (chunk) => chunk?.GetMapColor() ?? new(170, 170, 170, 255);
 
             DetermineBiomes();
+
+            GenerateRivers();
         }
 
         public static Color32[,] GetDisplayColors()
@@ -87,14 +90,27 @@ namespace Assets.Src.WorldGeneration
             }
         }
 
-        static void SmoothChunkStats(int iterations)
+        static void GenerateFinalChunkStats()
         {
-            SmoothSingleChunkStat(iterations, (chunk) => chunk.temperature, (chunk, val) => chunk.temperature = val, 10);
-            SmoothSingleChunkStat(iterations, (chunk) => chunk.moisture, (chunk, val) => chunk.moisture = val, 10);
-            SmoothSingleChunkStat(iterations, (chunk) => chunk.rockiness, (chunk, val) => chunk.rockiness = val, 10);
+            Utils.Log("Generating final chunk stats...");
+
+            //Temperature
+            Task temperateGenerationTask = Task.Run(() => SmoothSingleChunkStat(SMOOTHING_ITERATIONS, (chunk) => chunk.temperature, (chunk, val) => chunk.temperature = val))
+                    .ContinueWith((task) => NormalizeSingleChunkStat((chunk) => chunk.temperature, (chunk, val) => chunk.temperature = val)),
+                //Moisture
+                moistureGenerationTask = Task.Run(() => SmoothSingleChunkStat(SMOOTHING_ITERATIONS, (chunk) => chunk.moisture, (chunk, val) => chunk.moisture = val))
+                    .ContinueWith((task) => NormalizeSingleChunkStat((chunk) => chunk.moisture, (chunk, val) => chunk.moisture = val)),
+                //Rockiness
+                rockinessGenerationTask = Task.Run(() => SmoothSingleChunkStat(SMOOTHING_ITERATIONS, (chunk) => chunk.rockiness, (chunk, val) => chunk.rockiness = val))
+                    .ContinueWith((task) => NormalizeSingleChunkStat((chunk) => chunk.rockiness, (chunk, val) => chunk.rockiness = val));
+
+            //Wait for all tasks to finish
+            Task.WaitAll(temperateGenerationTask, moistureGenerationTask, rockinessGenerationTask);
+
+            Utils.Log("Finished generating final chunk stats");
         }
 
-        static void SmoothSingleChunkStat(int iterations, Func<Chunk, float> getStat, Action<Chunk, float> setStat, float finalScaler = 1f)
+        static void SmoothSingleChunkStat(int iterations, Func<Chunk, float> getStat, Action<Chunk, float> setStat)
         {
             Utils.Log("Smoothing chunk stat...");
 
@@ -144,22 +160,6 @@ namespace Assets.Src.WorldGeneration
                         setStat(world?.GetChunk(x, y)!, smoothedValues[x, y]);
                 }
             }
-
-            //Multiply the stat by the final scaler
-            Utils.Log("Finalizing chunk stats...");
-            for (int x = 0; x < size; x++)
-            {
-                for (int y = 0; y < size; y++)
-                    setStat(world?.GetChunk(x, y)!, getStat(world?.GetChunk(x, y)!) * finalScaler);
-            }
-        }
-
-        static void NormalizeChunkStats()
-        {
-            //Stats exceeds 0 and 1 at this point, so we need to normalize it
-            NormalizeSingleChunkStat((chunk) => chunk.temperature, (chunk, val) => chunk.temperature = val);
-            NormalizeSingleChunkStat((chunk) => chunk.moisture, (chunk, val) => chunk.moisture = val);
-            NormalizeSingleChunkStat((chunk) => chunk.rockiness, (chunk, val) => chunk.rockiness = val);
         }
 
         static void NormalizeSingleChunkStat(Func<Chunk, float> getStat, Action<Chunk, float> setStat)
@@ -203,8 +203,6 @@ namespace Assets.Src.WorldGeneration
         {
             Utils.Log("Determining biomes...");
 
-            getChunkColor = (chunk) => chunk?.Biome?.GetColor(chunk) ?? new Color32(170, 170, 170, 255);
-
             //Determine biomes
             for(int x = 0; x < size ; x++)
             {
@@ -218,6 +216,17 @@ namespace Assets.Src.WorldGeneration
                     chunk.DetermineBiome();
                 }
             }
+        }
+
+        static void GenerateRivers()
+        {
+            Utils.Log("Generating rivers...");
+
+            //Find starting locations (mountains and lakes) and add them to a list
+            //Draw rivers based on rockiness and moisture
+
+            List<Vector2> startLocations = new();
+
         }
 
     }

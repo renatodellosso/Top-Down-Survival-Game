@@ -13,7 +13,7 @@ namespace Assets.Src.WorldGeneration
         private static readonly Biome[] BIOMES_LIST = new Biome[]
         {
             new("forest", "Forest", 
-                (chunk) => new(0, 160, 40, 255),
+                (chunk) => new(0, 120, 40, 255),
                 0.5f, 0.6f, 0.4f
             ),
             
