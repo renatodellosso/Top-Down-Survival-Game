@@ -10,7 +10,7 @@ namespace Assets.Src.WorldGeneration
     public class Biome
     {
 
-        public string Id { protected set; get; }
+        public BiomeId Id { protected set; get; }
         public string Name { protected set; get; }
 
         public Func<Chunk, Color32> GetColor { protected set; get; }
@@ -19,7 +19,7 @@ namespace Assets.Src.WorldGeneration
         public float TargetMoisture { protected set; get; }
         public float TargetRockiness { protected set; get; }
 
-        public Biome(string id, string name, Func<Chunk, Color32> getColor, float targetTemperate, float targetMoisture, float targetRockiness)
+        public Biome(BiomeId id, string name, Func<Chunk, Color32> getColor, float targetTemperate, float targetMoisture, float targetRockiness)
         {
             Id = id;
             Name = name;

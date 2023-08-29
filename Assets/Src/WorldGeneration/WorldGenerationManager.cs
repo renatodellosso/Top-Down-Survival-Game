@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Assets.Src.WorldGeneration.WorldFeatures;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -21,6 +22,8 @@ namespace Assets.Src.WorldGeneration
         static Func<Chunk?, Color32> getChunkColor = (chunk) => new Color32(170, 170, 170, 255);
 
         const int SMOOTHING_ITERATIONS = 100;
+
+        const float ROAD_CHANCE_PER_BORDER = 0.03f;
 
         public static void StartGenerationAsync(int size)
         {
@@ -46,7 +49,7 @@ namespace Assets.Src.WorldGeneration
 
             DetermineBiomes();
 
-            GenerateRivers();
+            GenerateRoads();
         }
 
         public static Color32[,] GetDisplayColors()
@@ -218,15 +221,104 @@ namespace Assets.Src.WorldGeneration
             }
         }
 
-        static void GenerateRivers()
+        static void GenerateRoads()
         {
-            Utils.Log("Generating rivers...");
+            Utils.Log("Generating roads...");
 
-            //Find starting locations (mountains and lakes) and add them to a list
-            //Draw rivers based on rockiness and moisture
+            List<List<Road>> roads = new();
 
-            List<Vector2> startLocations = new();
+            //Generate start locations
+            Utils.Log("Generating start locations...");
+            Chunk[] potentialStarts = world!.GetBorderChunks();
+            foreach (Chunk chunk in potentialStarts)
+            {
+                if(Utils.RandDouble() < ROAD_CHANCE_PER_BORDER)
+                {
+                    Utils.Log("Starting road at " + chunk.Pos);
+                    Road road = new(chunk, Road.RoadType.Major);
+                    roads.Add(new List<Road>() { road });
+                }
+            }
 
+            //Generate roads
+            //Iterate through and extend each road towards the map border
+            Utils.Log("Extending roads...");
+            for (int i = 0; i < roads.Count; i++)
+            {
+                List<Road> road = roads[i];
+                Road lastNode;
+                Chunk lastChunk;
+
+                do
+                {
+                    //Get the last node and chunk in the road
+                    lastNode = road[^1];
+                    lastChunk = lastNode.Chunk!;
+
+                    //Get the chunk's neighbors
+                    Chunk[] neighbors = lastChunk.GetAdjacentChunks();
+
+                    List<Chunk> potentialNextChunks = new();
+                    potentialNextChunks.AddRange(neighbors);
+                    potentialNextChunks.OrderByDescending((chunk) => chunk!.rockiness);
+
+                    if (lastNode.Direction != Vector2.zero)
+                    {
+                        Chunk? chunk = world.GetChunk(lastChunk.Pos + lastNode.Direction);
+                        if (chunk != null)
+                            potentialNextChunks.Add(chunk);
+                    }
+
+                    //Remove water chunks
+                    potentialNextChunks = potentialNextChunks.Where(chunk => chunk.BiomeId != BiomeId.Water).ToList();
+
+                    //Remove chunks that are too rocky
+                    if (Utils.RandDouble() < potentialNextChunks.Last().rockiness)
+                    {
+                        Utils.Log("Removing chunk that is too rocky");
+                        potentialNextChunks.RemoveAt(potentialNextChunks.Count - 1);
+                        
+                        //Remove 50% of the remaining chunks
+                        for (int j = 0; j < potentialNextChunks.Count / 2; j++)
+                        {
+                            if (potentialNextChunks.Count == 1)
+                                break;
+
+                            potentialNextChunks.RemoveAt(Utils.RandInt(potentialNextChunks.Count - 1));
+                        }
+                    }
+
+                    //Get the next chunk
+                    Chunk nextChunk = potentialNextChunks.Last();
+
+                    //If the next chunk is null, we've reached the map border
+                    if (nextChunk == null)
+                    {
+                        Utils.Log("Reached map border");
+                        break;
+                    }
+
+                    //Create a new road
+                    Road newRoad = new(nextChunk, Road.RoadType.Major, lastNode);
+
+                    //Add the new road to the current road
+                    roads[i].Add(newRoad);
+
+                    //Update last chunk
+                    lastChunk = nextChunk;
+                }
+                while (!lastChunk.IsMapBorder());
+            }
+
+            //Add roads to chunks
+            Utils.Log("Adding roads to chunks...");
+            foreach(List<Road> road in roads)
+            {
+                foreach(Road node in road)
+                {
+                    node.Chunk!.AddWorldFeature(node);
+                }
+            }
         }
 
     }

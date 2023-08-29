@@ -67,5 +67,27 @@ namespace Assets.Src.WorldGeneration
                 $"\nHemisphere: {Hemisphere}");
         }
 
+        public Chunk[] GetBorderChunks()
+        {
+            HashSet<Chunk> chunks = new();
+
+            if(Chunks == null)
+                return chunks.ToArray();
+
+            for (int x = 0; x < Chunks.GetLength(0); x++)
+            {
+                chunks.Add(Chunks[x, 0]);
+                chunks.Add(Chunks[x, Chunks.GetLength(1) - 1]);
+            }
+
+            for (int y = 1; y < Chunks.GetLength(1) - 1; y++)
+            {
+                chunks.Add(Chunks[0, y]);
+                chunks.Add(Chunks[Chunks.GetLength(0) - 1, y]);
+            }
+
+            return chunks.ToArray();
+        }
+
     }
 }

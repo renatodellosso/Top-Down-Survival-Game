@@ -4,6 +4,7 @@ using System.Linq;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
+using Unity.VisualScripting;
 using UnityEngine;
 
 #nullable enable
@@ -28,14 +29,16 @@ namespace Assets.Src.WorldGeneration
 
         public float temperature, moisture, rockiness;
 
-        protected string biomeId = "";
-        public Biome? Biome => BiomeList.Get(biomeId);
+        public BiomeId? BiomeId { get; protected set; }
+        public Biome? Biome => BiomeList.Get(BiomeId);
+
+        List<WorldFeature> features = new();
 
         public Chunk(int worldSize, UnityEngine.Vector2 pos)
         {
             try
             {
-                this.Pos = pos;
+                Pos = pos;
 
                 //Calculate relative pos
                 float equator = worldSize / 2f;
@@ -59,7 +62,7 @@ namespace Assets.Src.WorldGeneration
 
         public void DetermineBiome()
         {
-            KeyValuePair<string, float> bestBiomeMatch = new("", float.MaxValue);
+            KeyValuePair<BiomeId?, float> bestBiomeMatch = new(null, float.MaxValue);
 
             foreach(Biome biome in BiomeList.BIOMES.Values)
             {
@@ -69,12 +72,48 @@ namespace Assets.Src.WorldGeneration
                     bestBiomeMatch = new(biome.Id, score);
             }
 
-            biomeId = bestBiomeMatch.Key;
+            BiomeId = bestBiomeMatch.Key;
         }
 
         public Color32 GetMapColor()
         {
-            return Biome?.GetColor(this) ?? new Color32(170, 170, 170, 255);
+            return features.FirstOrDefault()?.MapColor ?? Biome?.GetColor(this) ?? new Color32(170, 170, 170, 255);
+        }
+
+        public void AddWorldFeature(WorldFeature feature)
+        {
+            features.Add(feature);
+            features.OrderByDescending((feature) => feature.MapPriority);
+        }
+
+        public WorldFeature[] GetWorldFeatures()
+        {
+            return features.ToArray();
+        }
+
+        public Chunk[] GetAdjacentChunks()
+        {
+            List<Chunk> chunks = new();
+
+            for(int x = -1; x <= 1; x++)
+            {
+                for(int y = -1; y <= 1; y++)
+                {
+                    if(x == 0 && y == 0)
+                        continue;
+
+                    Chunk? adjChunk = World.instance!.GetChunk((int)Pos.x + x, (int)Pos.y + y);
+                    if(adjChunk != null)
+                        chunks.Add(adjChunk);
+                }
+            }
+
+            return chunks.ToArray();
+        }
+
+        public bool IsMapBorder()
+        {
+            return Pos.x == 0 || Pos.y == 0 || Pos.x == World.instance!.Chunks!.GetLength(0) - 1 || Pos.y == World.instance!.Chunks!.GetLength(1) - 1;
         }
 
     }

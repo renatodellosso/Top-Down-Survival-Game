@@ -10,7 +10,7 @@ namespace Assets.Src
     public static class Utils
     {
 
-        private static readonly Random RANDOM = new();
+        private static readonly Random Random = new();
 
         public static void Log(string msg)
         {
@@ -28,17 +28,27 @@ namespace Assets.Src
         /// </summary>
         public static float RandFloat(float min, float max)
         {
-            return ((float)RANDOM.NextDouble()) * (max - min) + min;
+            return ((float)Random.NextDouble()) * (max - min) + min;
         }
 
         public static double RandDouble(double min, double max)
         {
-            return RANDOM.NextDouble() * (max - min) + min;
+            return Random.NextDouble() * (max - min) + min;
         }
 
         public static double RandDouble()
         {
-            return RANDOM.NextDouble();
+            return Random.NextDouble();
+        }
+
+        public static int RandInt(int min, int max)
+        {
+            return Random.Next(min, max);
+        }
+
+        public static int RandInt(int max)
+        {
+            return Random.Next(max);
         }
 
     }
