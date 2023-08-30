@@ -235,7 +235,7 @@ namespace Assets.Src.WorldGeneration
                 if(Utils.RandDouble() < ROAD_CHANCE_PER_BORDER)
                 {
                     Utils.Log("Starting road at " + chunk.Pos);
-                    Road road = new(chunk, Road.RoadType.Major);
+                    Road road = new(chunk, Utils.RandDouble() < 0.25 ? Road.RoadType.Major : Road.RoadType.Minor);
                     roads.Add(new List<Road>() { road });
                 }
             }
@@ -245,69 +245,69 @@ namespace Assets.Src.WorldGeneration
             Utils.Log("Extending roads...");
             for (int i = 0; i < roads.Count; i++)
             {
-                List<Road> road = roads[i];
-                Road lastNode;
-                Chunk lastChunk;
-
-                do
+                try
                 {
-                    //Get the last node and chunk in the road
-                    lastNode = road[^1];
-                    lastChunk = lastNode.Chunk!;
+                    List<Road> road = roads[i];
+                    Road lastNode;
+                    Chunk lastChunk;
 
-                    //Get the chunk's neighbors
-                    Chunk[] neighbors = lastChunk.GetAdjacentChunks();
-
-                    List<Chunk> potentialNextChunks = new();
-                    potentialNextChunks.AddRange(neighbors);
-                    potentialNextChunks.OrderByDescending((chunk) => chunk!.rockiness);
-
-                    if (lastNode.Direction != Vector2.zero)
+                    do
                     {
-                        Chunk? chunk = world.GetChunk(lastChunk.Pos + lastNode.Direction);
-                        if (chunk != null)
-                            potentialNextChunks.Add(chunk);
-                    }
+                        //Get the last node and chunk in the road
+                        lastNode = road[^1];
+                        lastChunk = lastNode.Chunk!;
 
-                    //Remove water chunks
-                    potentialNextChunks = potentialNextChunks.Where(chunk => chunk.BiomeId != BiomeId.Water).ToList();
+                        //Get the chunk's neighbors
+                        Chunk[] neighbors = lastChunk.GetAdjacentChunks();
 
-                    //Remove chunks that are too rocky
-                    if (Utils.RandDouble() < potentialNextChunks.Last().rockiness)
-                    {
-                        Utils.Log("Removing chunk that is too rocky");
-                        potentialNextChunks.RemoveAt(potentialNextChunks.Count - 1);
-                        
-                        //Remove 50% of the remaining chunks
-                        for (int j = 0; j < potentialNextChunks.Count / 2; j++)
+                        List<Chunk> potentialNextChunks = new();
+                        potentialNextChunks.AddRange(neighbors);
+                        potentialNextChunks.OrderByDescending((chunk) => chunk!.rockiness);
+
+                        if (lastNode.Direction != Vector2.zero)
                         {
-                            if (potentialNextChunks.Count == 1)
-                                break;
-
-                            potentialNextChunks.RemoveAt(Utils.RandInt(potentialNextChunks.Count - 1));
+                            Chunk? chunk = world.GetChunk(lastChunk.Pos + lastNode.Direction);
+                            if (chunk != null)
+                                potentialNextChunks.Add(chunk);
                         }
+
+                        //Remove water chunks
+                        potentialNextChunks = potentialNextChunks.Where(chunk => chunk.BiomeId != BiomeId.Water).ToList();
+
+                        //Remove chunks that are too rocky
+                        if (Math.Max(Utils.RandDouble(), Utils.RandDouble()) < potentialNextChunks.Last().rockiness)
+                        {
+                            Utils.Log("Removing chunk that is too rocky");
+                            potentialNextChunks.RemoveAt(potentialNextChunks.Count - 1);
+
+                            //OrderBy is not in place!
+                            potentialNextChunks = potentialNextChunks.OrderBy(chunk => chunk!.rockiness + Utils.RandDouble() / 3).ToList();
+                        }
+
+                        //Get the next chunk
+                        Chunk nextChunk = potentialNextChunks.First();
+
+                        //If the next chunk is null, we've reached the map border
+                        if (nextChunk == null)
+                        {
+                            Utils.Log("Reached map border");
+                            break;
+                        }
+
+                        //Create a new road
+                        Road newRoad = new(nextChunk, lastNode.Type, lastNode);
+
+                        //Add the new road to the current road
+                        roads[i].Add(newRoad);
+
+                        //Update last chunk
+                        lastChunk = nextChunk;
                     }
-
-                    //Get the next chunk
-                    Chunk nextChunk = potentialNextChunks.Last();
-
-                    //If the next chunk is null, we've reached the map border
-                    if (nextChunk == null)
-                    {
-                        Utils.Log("Reached map border");
-                        break;
-                    }
-
-                    //Create a new road
-                    Road newRoad = new(nextChunk, Road.RoadType.Major, lastNode);
-
-                    //Add the new road to the current road
-                    roads[i].Add(newRoad);
-
-                    //Update last chunk
-                    lastChunk = nextChunk;
+                    while (!lastChunk.IsMapBorder());
+                } catch (Exception e)
+                {
+                    Utils.Log(e);
                 }
-                while (!lastChunk.IsMapBorder());
             }
 
             //Add roads to chunks
