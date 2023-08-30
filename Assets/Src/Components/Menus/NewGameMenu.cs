@@ -194,9 +194,7 @@ namespace Assets.Src.Components.Menus
                 chunkSizeDropdown.interactable = false;
                 chunkSizeInput.interactable = false;
 
-                WorldGenerationManager.StartGenerationAsync(WorldSize);
-
-                //Set up world generation display
+                WorldGeneration.WorldGeneration.StartGenerationAsync(WorldSize);
 
                 //Start coroutine to update the display
                 StartCoroutine(WhileWorldGenerating());
@@ -220,9 +218,10 @@ namespace Assets.Src.Components.Menus
             do
             {
                 UpdateWorldMapDisplay();
+                Utils.Log($"World Generation Task Complete: {WorldGeneration.WorldGeneration.task.IsCompleted}, Successful: {WorldGeneration.WorldGeneration.task.IsCompletedSuccessfully}");
                 yield return new WaitForSeconds(0.5f);
             }
-            while (!WorldGenerationManager.task.IsCompleted);
+            while (!WorldGeneration.WorldGeneration.task.IsCompleted);
 
             UpdateWorldMapDisplay();
             OnWorldGenerationComplete();
@@ -231,7 +230,7 @@ namespace Assets.Src.Components.Menus
         void UpdateWorldMapDisplay()
         {
             //Convert the world map to an array of colors
-            Color32[,] worldMapDisplayColors = WorldGenerationManager.GetDisplayColors();
+            Color32[,] worldMapDisplayColors = WorldGeneration.WorldGeneration.GetDisplayColors();
             Color32[] mapColors = new Color32[worldMapDisplayColors.GetLength(0) * worldMapDisplayColors.GetLength(1)];
 
             for (int x = 0; x < worldMapDisplayColors.GetLength(0); x++)
@@ -255,7 +254,7 @@ namespace Assets.Src.Components.Menus
 
         void OnWorldGenerationComplete()
         {
-            print("World generation complete!");
+            Utils.Log($"World Generation Complete: {WorldGeneration.WorldGeneration.task.IsCompleted}, Successful: {WorldGeneration.WorldGeneration.task.IsCompletedSuccessfully}");
 
             //Set settings to not interactable
             confirmButton.interactable = true;

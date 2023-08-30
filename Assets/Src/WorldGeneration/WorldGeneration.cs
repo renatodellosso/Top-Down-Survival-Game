@@ -10,7 +10,7 @@ using UnityEngine;
 #nullable enable
 namespace Assets.Src.WorldGeneration
 {
-    public static class WorldGenerationManager
+    public static class WorldGeneration
     {
 
         public static Task? task;
@@ -27,29 +27,36 @@ namespace Assets.Src.WorldGeneration
 
         public static void StartGenerationAsync(int size)
         {
-            WorldGenerationManager.size = size;
+            WorldGeneration.size = size;
 
-            task = Task.Run(GenerateWorldAsync);
+            task = CancellableTask.Run("MainWorldGeneration", GenerateWorldAsync);
         }
 
         static void GenerateWorldAsync()
         {
-            Utils.Log($"Generating world of size {size}...");
+            try
+            {
+                Utils.Log($"Generating world of size {size}...");
 
-            //Init world
-            world = new(size);
+                //Init world
+                world = new(size);
 
-            world.GenerateInitialStats();
+                world.GenerateInitialStats();
 
-            //Generate chunk stats
-            GenerateInitialChunkStats();
-            GenerateFinalChunkStats();
+                //Generate chunk stats
+                GenerateInitialChunkStats();
+                GenerateFinalChunkStats();
 
-            getChunkColor = (chunk) => chunk?.GetMapColor() ?? new(170, 170, 170, 255);
+                getChunkColor = (chunk) => chunk?.GetMapColor() ?? new(170, 170, 170, 255);
 
-            DetermineBiomes();
+                DetermineBiomes();
 
-            GenerateRoads();
+                GenerateRoads();
+            }
+            catch (Exception e)
+            {
+                Utils.Log(e, "Failed to generate world");
+            }
         }
 
         public static Color32[,] GetDisplayColors()
@@ -98,17 +105,18 @@ namespace Assets.Src.WorldGeneration
             Utils.Log("Generating final chunk stats...");
 
             //Temperature
-            Task temperateGenerationTask = Task.Run(() => SmoothSingleChunkStat(SMOOTHING_ITERATIONS, (chunk) => chunk.temperature, (chunk, val) => chunk.temperature = val))
+            Task tempGenerationTask = CancellableTask.Run("TempGeneration", () => SmoothSingleChunkStat(SMOOTHING_ITERATIONS, (chunk) => chunk.temperature, (chunk, val) => chunk.temperature = val))
                     .ContinueWith((task) => NormalizeSingleChunkStat((chunk) => chunk.temperature, (chunk, val) => chunk.temperature = val)),
                 //Moisture
-                moistureGenerationTask = Task.Run(() => SmoothSingleChunkStat(SMOOTHING_ITERATIONS, (chunk) => chunk.moisture, (chunk, val) => chunk.moisture = val))
+                moistureGenerationTask = CancellableTask.Run("MoistureGeneration", () => SmoothSingleChunkStat(SMOOTHING_ITERATIONS, (chunk) => chunk.moisture, (chunk, val) => chunk.moisture = val))
                     .ContinueWith((task) => NormalizeSingleChunkStat((chunk) => chunk.moisture, (chunk, val) => chunk.moisture = val)),
                 //Rockiness
-                rockinessGenerationTask = Task.Run(() => SmoothSingleChunkStat(SMOOTHING_ITERATIONS, (chunk) => chunk.rockiness, (chunk, val) => chunk.rockiness = val))
+                rockinessGenerationTask = CancellableTask.Run("RockinessGeneration", () => SmoothSingleChunkStat(SMOOTHING_ITERATIONS, (chunk) => chunk.rockiness, (chunk, val) => chunk.rockiness = val))
                     .ContinueWith((task) => NormalizeSingleChunkStat((chunk) => chunk.rockiness, (chunk, val) => chunk.rockiness = val));
 
             //Wait for all tasks to finish
-            Task.WaitAll(temperateGenerationTask, moistureGenerationTask, rockinessGenerationTask);
+            Utils.Log("Waiting for chunk stat generation to finish...");
+            Task.WaitAll(tempGenerationTask, moistureGenerationTask, rockinessGenerationTask);
 
             Utils.Log("Finished generating final chunk stats");
         }
@@ -262,7 +270,7 @@ namespace Assets.Src.WorldGeneration
 
                         List<Chunk> potentialNextChunks = new();
                         potentialNextChunks.AddRange(neighbors);
-                        potentialNextChunks.OrderByDescending((chunk) => chunk!.rockiness);
+                        potentialNextChunks = potentialNextChunks.OrderByDescending((chunk) => chunk!.rockiness).ToList();
 
                         if (lastNode.Direction != Vector2.zero)
                         {
@@ -277,11 +285,11 @@ namespace Assets.Src.WorldGeneration
                         //Remove chunks that are too rocky
                         if (Math.Max(Utils.RandDouble(), Utils.RandDouble()) < potentialNextChunks.Last().rockiness)
                         {
-                            Utils.Log("Removing chunk that is too rocky");
+                            Utils.Log("Removing chunk that is too rocky. Rockiness: " + potentialNextChunks.Last().rockiness);
                             potentialNextChunks.RemoveAt(potentialNextChunks.Count - 1);
 
                             //OrderBy is not in place!
-                            potentialNextChunks = potentialNextChunks.OrderBy(chunk => chunk!.rockiness + Utils.RandDouble() / 3).ToList();
+                            potentialNextChunks = potentialNextChunks.OrderByDescending(chunk => chunk!.rockiness + Utils.RandDouble() / 3).ToList();
                         }
 
                         //Get the next chunk

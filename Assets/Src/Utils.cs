@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Assets.Src
@@ -49,6 +50,22 @@ namespace Assets.Src
         public static int RandInt(int max)
         {
             return Random.Next(max);
+        }
+
+        static readonly List<CancellationTokenSource> activeTasks = new();
+
+        /// <summary>
+        /// Calls Task.Run() with a CancellationToken that will be cancelled when the game is closed
+        /// </summary>
+        /// <param name="action">The action to execute asynchronously</param>
+        /// <returns>The task that was created</returns>
+        public static Task Async(Action action)
+        {
+            CancellationTokenSource source = new();
+            activeTasks.Add(source);
+            Task task = Task.Run(action, source.Token);
+
+            return task;
         }
 
     }
