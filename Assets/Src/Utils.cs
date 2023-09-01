@@ -11,7 +11,7 @@ namespace Assets.Src
     public static class Utils
     {
 
-        private static readonly Random Random = new();
+        private static readonly Random Random = new(Seed: DateTimeOffset.Now.Millisecond);
 
         public static void Log(string msg)
         {

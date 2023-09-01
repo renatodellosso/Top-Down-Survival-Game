@@ -31,9 +31,17 @@ namespace Assets.Src.WorldGeneration
             get;
         } = 1; //Initial value has to come after set/get protection levels
 
+        public int Size
+        {
+            protected set;
+            get;
+        }
+
         public World(int size)
         {
             instance = this;
+
+            Size = size;
 
             //Init chunks
             Chunks = new Chunk[size, size];

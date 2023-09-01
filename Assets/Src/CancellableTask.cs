@@ -33,7 +33,8 @@ namespace Assets.Src
 
         public string name;
 
-        public CancellableTask(string name, Action<CancellationToken> action, CancellationTokenSource cancellationTokenSource) : base(action, cancellationTokenSource.Token)
+        public CancellableTask(string name, Action<CancellationToken> action, CancellationTokenSource cancellationTokenSource)
+            : base(()=>action(cancellationTokenSource.Token), cancellationTokenSource.Token)
         {
             this.name = name;
             this.cancellationTokenSource = cancellationTokenSource;

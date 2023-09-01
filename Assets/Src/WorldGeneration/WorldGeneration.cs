@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 
@@ -32,7 +33,7 @@ namespace Assets.Src.WorldGeneration
             task = CancellableTask.Run("MainWorldGeneration", GenerateWorldAsync);
         }
 
-        static void GenerateWorldAsync()
+        static void GenerateWorldAsync(CancellationToken cancellationToken)
         {
             try
             {
@@ -51,7 +52,11 @@ namespace Assets.Src.WorldGeneration
 
                 DetermineBiomes();
 
-                GenerateRoads();
+                GenerateRoads(cancellationToken);
+            }
+            catch (TaskCanceledException)
+            {
+                Utils.Log("World generation cancelled.");
             }
             catch (Exception e)
             {
@@ -105,13 +110,13 @@ namespace Assets.Src.WorldGeneration
             Utils.Log("Generating final chunk stats...");
 
             //Temperature
-            Task tempGenerationTask = CancellableTask.Run("TempGeneration", () => SmoothSingleChunkStat(SMOOTHING_ITERATIONS, (chunk) => chunk.temperature, (chunk, val) => chunk.temperature = val))
+            Task tempGenerationTask = CancellableTask.Run("TempGeneration", (ct) => SmoothSingleChunkStat(SMOOTHING_ITERATIONS, (chunk) => chunk.temperature, (chunk, val) => chunk.temperature = val))
                     .ContinueWith((task) => NormalizeSingleChunkStat((chunk) => chunk.temperature, (chunk, val) => chunk.temperature = val)),
                 //Moisture
-                moistureGenerationTask = CancellableTask.Run("MoistureGeneration", () => SmoothSingleChunkStat(SMOOTHING_ITERATIONS, (chunk) => chunk.moisture, (chunk, val) => chunk.moisture = val))
+                moistureGenerationTask = CancellableTask.Run("MoistureGeneration", (ct) => SmoothSingleChunkStat(SMOOTHING_ITERATIONS, (chunk) => chunk.moisture, (chunk, val) => chunk.moisture = val))
                     .ContinueWith((task) => NormalizeSingleChunkStat((chunk) => chunk.moisture, (chunk, val) => chunk.moisture = val)),
                 //Rockiness
-                rockinessGenerationTask = CancellableTask.Run("RockinessGeneration", () => SmoothSingleChunkStat(SMOOTHING_ITERATIONS, (chunk) => chunk.rockiness, (chunk, val) => chunk.rockiness = val))
+                rockinessGenerationTask = CancellableTask.Run("RockinessGeneration", (ct) => SmoothSingleChunkStat(SMOOTHING_ITERATIONS, (chunk) => chunk.rockiness, (chunk, val) => chunk.rockiness = val))
                     .ContinueWith((task) => NormalizeSingleChunkStat((chunk) => chunk.rockiness, (chunk, val) => chunk.rockiness = val));
 
             //Wait for all tasks to finish
@@ -229,7 +234,7 @@ namespace Assets.Src.WorldGeneration
             }
         }
 
-        static void GenerateRoads()
+        static void GenerateRoads(CancellationToken cancellationToken)
         {
             Utils.Log("Generating roads...");
 
@@ -240,7 +245,13 @@ namespace Assets.Src.WorldGeneration
             Chunk[] potentialStarts = world!.GetBorderChunks();
             foreach (Chunk chunk in potentialStarts)
             {
-                if(Utils.RandDouble() < ROAD_CHANCE_PER_BORDER)
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    Utils.Log("Road generation cancelled");
+                    return;
+                }
+
+                if (Utils.RandDouble() < ROAD_CHANCE_PER_BORDER)
                 {
                     Utils.Log("Starting road at " + chunk.Pos);
                     Road road = new(chunk, Utils.RandDouble() < 0.25 ? Road.RoadType.Major : Road.RoadType.Minor);
@@ -256,44 +267,94 @@ namespace Assets.Src.WorldGeneration
                 try
                 {
                     List<Road> road = roads[i];
+                    if (road.Count == 0) continue;
+
                     Road lastNode;
                     Chunk lastChunk;
 
+                    List<Chunk> prevChunks = new();
+
+                    int iteration = 0;
                     do
                     {
+                        if(road.Count == 0) break;
+
+                        if(iteration % 500 == 0) Utils.Log($"Extending road... Iteration: {iteration}");
+
+                        if(cancellationToken.IsCancellationRequested)
+                        {
+                            Utils.Log("Road generation cancelled");
+                            return;
+                        }
+
                         //Get the last node and chunk in the road
                         lastNode = road[^1];
                         lastChunk = lastNode.Chunk!;
 
                         //Get the chunk's neighbors
-                        Chunk[] neighbors = lastChunk.GetAdjacentChunks();
+                        Chunk[] neighbors = lastChunk.GetAdjacentChunks().Where(c => !prevChunks.Contains(c)).ToArray(); //This feels inefficient
 
-                        List<Chunk> potentialNextChunks = new();
-                        potentialNextChunks.AddRange(neighbors);
-                        potentialNextChunks = potentialNextChunks.OrderByDescending((chunk) => chunk!.rockiness).ToList();
+                        //Value is the score
+                        List<KeyValuePair<Chunk, float>> potentialNextChunks = new();
 
-                        if (lastNode.Direction != Vector2.zero)
-                        {
-                            Chunk? chunk = world.GetChunk(lastChunk.Pos + lastNode.Direction);
-                            if (chunk != null)
-                                potentialNextChunks.Add(chunk);
-                        }
+                        //Add neighbors
+                        foreach (Chunk chunk in neighbors)
+                            potentialNextChunks.Add(new(chunk, 0));
 
                         //Remove water chunks
-                        potentialNextChunks = potentialNextChunks.Where(chunk => chunk.BiomeId != BiomeId.Water).ToList();
+                        potentialNextChunks = potentialNextChunks.Where(entry => entry.Key.BiomeId != BiomeId.Water).ToList();
 
-                        //Remove chunks that are too rocky
-                        if (Math.Max(Utils.RandDouble(), Utils.RandDouble()) < potentialNextChunks.Last().rockiness)
+                        //Generate scores
+                        for(int j = 0; j < potentialNextChunks.Count; j++)
                         {
-                            Utils.Log("Removing chunk that is too rocky. Rockiness: " + potentialNextChunks.Last().rockiness);
-                            potentialNextChunks.RemoveAt(potentialNextChunks.Count - 1);
+                            KeyValuePair<Chunk, float> entry = potentialNextChunks[j];
+                            Chunk? chunk = entry.Key;
 
-                            //OrderBy is not in place!
-                            potentialNextChunks = potentialNextChunks.OrderByDescending(chunk => chunk!.rockiness + Utils.RandDouble() / 3).ToList();
+                            float score = chunk!.rockiness + chunk!.moisture + Math.Abs(chunk!.temperature - 0.5f) + (float)Utils.RandDouble() / 2;
+
+                            //Penalize for adjacent roads
+                            Chunk[] adjacent = chunk!.GetAdjacentChunks();
+                            foreach(Chunk adj in adjacent)
+                            {
+                                foreach(WorldFeature feature in adj.GetWorldFeatures())
+                                {
+                                    if (feature is Road)
+                                        score += 0.2f;
+                                }
+                            }
+
+                            //Reward continuing in the same direction
+                            if (lastNode.Direction != Vector2.zero)
+                            {
+                                if(chunk.Pos == lastChunk.Pos + lastNode.Direction)
+                                    score -= 0.5f;
+                            }
+
+                            potentialNextChunks[j] = new(chunk, score);
                         }
 
+                        //Order chunks
+                        potentialNextChunks = potentialNextChunks.OrderByDescending(
+                            (entry) => entry.Value).ToList();
+
+                        //if (lastNode.Direction != Vector2.zero)
+                        //{
+                        //    Chunk? chunk = world.GetChunk(lastChunk.Pos + lastNode.Direction);
+                        //    if (chunk != null)
+                        //        potentialNextChunks.Add(new(chunk, 0));
+                        //}
+
+                        //Remove chunks that are too rocky
+                        //if (Math.Max(Utils.RandDouble(), Utils.RandDouble()) < potentialNextChunks.Last().rockiness / 3 && iteration < 10)
+                        //{
+                        //    potentialNextChunks.RemoveAt(potentialNextChunks.Count - 1);
+
+                        //    //OrderBy is not in place!
+                        //    potentialNextChunks = potentialNextChunks.OrderByDescending(chunk => chunk!.rockiness + Utils.RandDouble() / 3).ToList();
+                        //}
+
                         //Get the next chunk
-                        Chunk nextChunk = potentialNextChunks.First();
+                        Chunk nextChunk = potentialNextChunks.Last().Key;
 
                         //If the next chunk is null, we've reached the map border
                         if (nextChunk == null)
@@ -310,22 +371,33 @@ namespace Assets.Src.WorldGeneration
 
                         //Update last chunk
                         lastChunk = nextChunk;
+
+                        //Add new chunk to previous chunks
+                        prevChunks.Add(lastChunk);
+
+                        iteration++;
                     }
-                    while (!lastChunk.IsMapBorder());
+                    while (!lastChunk.IsMapBorder() && iteration < 100 * world.Size);
                 } catch (Exception e)
                 {
-                    Utils.Log(e);
+                    Utils.Log(e, "Failed to extend roads");
                 }
             }
 
-            //Add roads to chunks
-            Utils.Log("Adding roads to chunks...");
-            foreach(List<Road> road in roads)
+            try
             {
-                foreach(Road node in road)
+                //Add roads to chunks
+                Utils.Log("Adding roads to chunks...");
+                foreach (List<Road> road in roads)
                 {
-                    node.Chunk!.AddWorldFeature(node);
+                    foreach (Road node in road)
+                    {
+                        node.Chunk!.AddWorldFeature(node);
+                    }
                 }
+            } catch (Exception e)
+            {
+                Utils.Log(e, "Failed to add roads to chunks");
             }
         }
 

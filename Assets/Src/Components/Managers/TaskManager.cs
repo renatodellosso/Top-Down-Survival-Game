@@ -2,6 +2,7 @@ using Assets.Src;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using UnityEditor.Callbacks;
 using UnityEngine;
 
 public class TaskManager : MonoBehaviour
@@ -22,12 +23,6 @@ public class TaskManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
-
     void FixedUpdate()
     {
         for(int i = 0; i < CancellableTask.activeTasks.Count; i++)
@@ -46,4 +41,11 @@ public class TaskManager : MonoBehaviour
     {
         CancellableTask.CancelAllTasks();
     }
+
+    [UnityEditor.Callbacks.DidReloadScripts]
+    static void OnScriptsReloaded()
+    {
+        CancellableTask.CancelAllTasks();
+    }
+
 }
