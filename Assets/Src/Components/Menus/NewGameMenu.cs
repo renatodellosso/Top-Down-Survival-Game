@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -13,10 +14,14 @@ namespace Assets.Src.Components.Menus
 
         public bool multiplayer = false;
 
+        public StartGameLoadingScreen startGameLoadingScreen;
+
         //NOTE: TMP_InputField, not InputField
         TMP_InputField nameInput, worldSizeInput, chunkSizeInput;
         TMP_Dropdown worldSizeDropdown, chunkSizeDropdown;
-        Button confirmButton;
+        Button confirmButton, playButton;
+
+        TMP_Text worldGenerationLog;
 
         Image worldGenerationDisplay;
 
@@ -108,7 +113,12 @@ namespace Assets.Src.Components.Menus
             chunkSizeDropdown = dropdowns.Last();
 
             //Get buttons
-            confirmButton = GetComponentsInChildren<Button>().Where(c => c.name == "Confirm").First();
+            IEnumerable<Button> buttons = GetComponentsInChildren<Button>();
+            confirmButton = buttons.Where(c => c.name == "Confirm").First();
+            playButton = buttons.Where(c => c.name == "Play").First();
+
+            //Get text
+            worldGenerationLog = GetComponentsInChildren<TMP_Text>().Where(t => t.name == "Log").First();
 
             //Set up world size dropdown
             worldSizeDropdown.ClearOptions();
@@ -143,6 +153,13 @@ namespace Assets.Src.Components.Menus
 
             //Set up world generation display
             worldGenerationDisplay = GetComponentsInChildren<Image>().Where(i => i.name == "World Map Display").First();
+
+            //Set up play button
+            playButton.onClick.AddListener(PlayGame);
+            playButton.interactable = false;
+
+            //Reset world generation log
+            worldGenerationLog.text = "";
         }
 
         void OnWorldSizeDropdownChanged(int value)
@@ -178,17 +195,10 @@ namespace Assets.Src.Components.Menus
             if (nameInput.text != "")
             {
                 print("Starting world generation...");
+                worldGenerationLog.text = "Starting world generation...\n";
 
                 //Set settings to not interactable
-                confirmButton.interactable = false;
-
-                nameInput.interactable = false;
-
-                worldSizeDropdown.interactable = false;
-                worldSizeInput.interactable = false;
-
-                chunkSizeDropdown.interactable = false;
-                chunkSizeInput.interactable = false;
+                SetInteractables(false);
 
                 WorldGeneration.WorldGeneration.StartGenerationAsync(WorldSize);
 
@@ -196,6 +206,21 @@ namespace Assets.Src.Components.Menus
                 StartCoroutine(WhileWorldGenerating());
             }
             else StartCoroutine(FlashWorldNameInput()); //No name specified, alert the user
+        }
+
+        void SetInteractables(bool useable)
+        {
+            confirmButton.interactable = useable;
+
+            nameInput.interactable = useable;
+
+            worldSizeDropdown.interactable = useable;
+            worldSizeInput.interactable = useable;
+
+            chunkSizeDropdown.interactable = useable;
+            chunkSizeInput.interactable = useable;
+
+            playButton.interactable = useable;
         }
 
         IEnumerator FlashWorldNameInput()
@@ -251,24 +276,21 @@ namespace Assets.Src.Components.Menus
         void OnWorldGenerationComplete()
         {
             Utils.Log($"World Generation Complete: {WorldGeneration.WorldGeneration.task.IsCompleted}, Successful: {WorldGeneration.WorldGeneration.task.IsCompletedSuccessfully}");
+            worldGenerationLog.text += "World generation complete!\n";
 
             //Save the world
             SaveWorld();
 
-            //Set settings to not interactable
-            confirmButton.interactable = true;
-
-            nameInput.interactable = true;
-
-            worldSizeDropdown.interactable = true;
-            worldSizeInput.interactable = true;
-
-            chunkSizeDropdown.interactable = true;
-            chunkSizeInput.interactable = true;
+            //Set settings to interactable
+            SetInteractables(true);
+            playButton.interactable = false; //Don't let the user play until the world is saved
         }
 
         void SaveWorld()
         {
+            worldGenerationLog.text += "Saving world...\n";
+
+            //Set the save name
             string saveName = nameInput.text;
             if (SaveManager.SaveExists(saveName))
             {
@@ -280,10 +302,33 @@ namespace Assets.Src.Components.Menus
                 }
             }
 
+            worldGenerationLog.text += $"Save name: {saveName}\n";
+
             SaveManager.saveName = saveName;
 
+            worldGenerationLog.text += "Saving world data...\n";
+
             //Save the world
-            SaveManager.SaveWorld();
+            CancellableTask saveTask = SaveManager.SaveWorld();
+            StartCoroutine(WaitForSavingToComplete(saveTask));
+        }
+
+        IEnumerator WaitForSavingToComplete(Task saveTask)
+        {
+            while(!saveTask.IsCompleted)
+                yield return new WaitForSeconds(0.5f);
+
+            worldGenerationLog.text += "World saved!\n";
+
+            //Set play button to interactable
+            playButton.interactable = true;
+        }
+
+        void PlayGame()
+        {
+            print("Starting game...");
+            StartGameLoadingScreen.instance = startGameLoadingScreen;
+            FadeOut(onFadeComplete: () => StartGameLoadingScreen.StartGame(multiplayer));
         }
 
     }
