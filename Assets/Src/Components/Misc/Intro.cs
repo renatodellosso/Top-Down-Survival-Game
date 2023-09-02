@@ -1,6 +1,4 @@
 using Assets.Src.Components.Menus;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 

@@ -1,15 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
-using Unity.VisualScripting;
 using UnityEngine;
 
 #nullable enable
 namespace Assets.Src.WorldGeneration
 {
+    [Serializable]
     public class Chunk
     {
 
@@ -22,7 +19,8 @@ namespace Assets.Src.WorldGeneration
         /// <summary>
         /// Percentage of the way to the world border
         /// </summary>
-        public UnityEngine.Vector2 RelativePos {
+        public UnityEngine.Vector2 RelativePos
+        {
             protected set;
             get;
         }
@@ -64,7 +62,7 @@ namespace Assets.Src.WorldGeneration
         {
             KeyValuePair<BiomeId?, float> bestBiomeMatch = new(null, float.MaxValue);
 
-            foreach(Biome biome in BiomeList.BIOMES.Values)
+            foreach (Biome biome in BiomeList.BIOMES.Values)
             {
                 float score = biome.GetRelativeScore(this);
 
@@ -95,15 +93,15 @@ namespace Assets.Src.WorldGeneration
         {
             List<Chunk> chunks = new();
 
-            for(int x = -1; x <= 1; x++)
+            for (int x = -1; x <= 1; x++)
             {
-                for(int y = -1; y <= 1; y++)
+                for (int y = -1; y <= 1; y++)
                 {
-                    if(x == 0 && y == 0)
+                    if (x == 0 && y == 0)
                         continue;
 
                     Chunk? adjChunk = World.instance!.GetChunk((int)Pos.x + x, (int)Pos.y + y);
-                    if(adjChunk != null)
+                    if (adjChunk != null)
                         chunks.Add(adjChunk);
                 }
             }

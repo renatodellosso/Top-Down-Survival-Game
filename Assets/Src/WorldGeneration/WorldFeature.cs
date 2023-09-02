@@ -1,13 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 
 #nullable enable
 namespace Assets.Src.WorldGeneration
 {
+    [Serializable]
     public abstract class WorldFeature
     {
         public Chunk? Chunk { get; protected set; }

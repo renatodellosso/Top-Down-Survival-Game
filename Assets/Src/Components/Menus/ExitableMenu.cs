@@ -1,7 +1,4 @@
-using Assets.Src.Components.Menus;
 using Assets.Src.Components.Misc;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace Assets.Src.Components.Menus
@@ -23,7 +20,7 @@ namespace Assets.Src.Components.Menus
         /// </summary>
         void Update()
         {
-            if(Input.GetKeyDown(KeyCode.Escape))
+            if (Input.GetKeyDown(KeyCode.Escape))
             {
                 Back();
             }

@@ -1,14 +1,10 @@
-using Assets.Src.Components.Menus;
-using Assets.Src.Components.Misc;
-using Assets.Src.WorldGeneration;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEngine;
 using TMPro;
-using System;
+using UnityEngine;
 using UnityEngine.UI;
-using System.Threading.Tasks;
 
 namespace Assets.Src.Components.Menus
 {
@@ -45,7 +41,7 @@ namespace Assets.Src.Components.Menus
                 print($"Setting world size to {value}...");
 
                 worldSizeInput.SetTextWithoutNotify(value.ToString());
-                
+
                 //If the value is not a preset, set the dropdown to custom
                 if (!WORLD_SIZE_PRESETS.ContainsValue(WorldSize))
                 {
@@ -105,7 +101,7 @@ namespace Assets.Src.Components.Menus
             inputs = inputs.Where(i => i.contentType == TMP_InputField.ContentType.IntegerNumber); //Switch to only alphanumeric inputs
             worldSizeInput = inputs.First();
             chunkSizeInput = inputs.Last();
-            
+
             //Get dropdowns
             IEnumerable<TMP_Dropdown> dropdowns = GetComponentsInChildren<TMP_Dropdown>();
             worldSizeDropdown = dropdowns.First();
@@ -144,7 +140,7 @@ namespace Assets.Src.Components.Menus
 
             //Set up button
             confirmButton.onClick.AddListener(StartGeneration);
-            
+
             //Set up world generation display
             worldGenerationDisplay = GetComponentsInChildren<Image>().Where(i => i.name == "World Map Display").First();
         }
@@ -179,7 +175,7 @@ namespace Assets.Src.Components.Menus
 
         void StartGeneration()
         {
-            if (nameInput.text != "" && !SaveManager.SaveExists(nameInput.text))
+            if (nameInput.text != "")
             {
                 print("Starting world generation...");
 
@@ -204,7 +200,7 @@ namespace Assets.Src.Components.Menus
 
         IEnumerator FlashWorldNameInput()
         {
-            for(int i = 0; i < 3; i++)
+            for (int i = 0; i < 3; i++)
             {
                 nameInput.interactable = false;
                 yield return new WaitForSeconds(0.1f);
@@ -256,6 +252,9 @@ namespace Assets.Src.Components.Menus
         {
             Utils.Log($"World Generation Complete: {WorldGeneration.WorldGeneration.task.IsCompleted}, Successful: {WorldGeneration.WorldGeneration.task.IsCompletedSuccessfully}");
 
+            //Save the world
+            SaveWorld();
+
             //Set settings to not interactable
             confirmButton.interactable = true;
 
@@ -266,6 +265,25 @@ namespace Assets.Src.Components.Menus
 
             chunkSizeDropdown.interactable = true;
             chunkSizeInput.interactable = true;
+        }
+
+        void SaveWorld()
+        {
+            string saveName = nameInput.text;
+            if (SaveManager.SaveExists(saveName))
+            {
+                int counter = 0;
+                while (SaveManager.SaveExists(saveName))
+                {
+                    counter++;
+                    saveName = $"{nameInput.text} ({counter})";
+                }
+            }
+
+            SaveManager.saveName = saveName;
+
+            //Save the world
+            SaveManager.SaveWorld();
         }
 
     }

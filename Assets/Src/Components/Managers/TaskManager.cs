@@ -1,8 +1,5 @@
 using Assets.Src;
-using System.Collections;
-using System.Collections.Generic;
 using System.Threading.Tasks;
-using UnityEditor.Callbacks;
 using UnityEngine;
 
 public class TaskManager : MonoBehaviour
@@ -13,7 +10,7 @@ public class TaskManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        if(instance != null)
+        if (instance != null)
         {
             Destroy(gameObject);
             return;
@@ -25,12 +22,12 @@ public class TaskManager : MonoBehaviour
 
     void FixedUpdate()
     {
-        for(int i = 0; i < CancellableTask.activeTasks.Count; i++)
+        for (int i = 0; i < CancellableTask.activeTasks.Count; i++)
         {
             CancellableTask.ActiveTaskEntry activeTaskEntry = CancellableTask.activeTasks[i];
             Task task = activeTaskEntry.task;
 
-            if(task.IsCompleted)
+            if (task.IsCompleted)
             {
                 CancellableTask.activeTasks.Remove(activeTaskEntry);
             }

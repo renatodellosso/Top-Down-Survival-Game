@@ -1,8 +1,4 @@
 using Assets.Src.Components.Misc;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.UI;
 
 namespace Assets.Src.Components.Menus
 {

@@ -1,25 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 
 #nullable enable
 namespace Assets.Src.WorldGeneration
 {
+    [Serializable]
     public class World
     {
 
         public static World? instance;
 
+         Chunk?[,]? chunksInternal;
+
         /// <summary>
         /// Avoid accessing this directly, use <see cref="GetChunk(int, int)"/> instead
         /// </summary>
-        public Chunk[,]? Chunks
+        public Chunk?[,]? Chunks
         {
-            protected set;
-            get;
+            get => chunksInternal;
         }
 
         /// <summary>
@@ -44,11 +44,11 @@ namespace Assets.Src.WorldGeneration
             Size = size;
 
             //Init chunks
-            Chunks = new Chunk[size, size];
+            chunksInternal = new Chunk[size, size];
 
-            for(int x = 0; x < size; x++)
-                for(int y = 0; y < size; y++)
-                    Chunks[x, y] = new Chunk(size, new(x, y));
+            for (int x = 0; x < size; x++)
+                for (int y = 0; y < size; y++)
+                    chunksInternal[x, y] = new Chunk(size, new(x, y));
         }
 
         public Chunk? GetChunk(int x, int y)
@@ -79,19 +79,19 @@ namespace Assets.Src.WorldGeneration
         {
             HashSet<Chunk> chunks = new();
 
-            if(Chunks == null)
+            if (Chunks == null)
                 return chunks.ToArray();
 
             for (int x = 0; x < Chunks.GetLength(0); x++)
             {
-                chunks.Add(Chunks[x, 0]);
-                chunks.Add(Chunks[x, Chunks.GetLength(1) - 1]);
+                chunks.Add(Chunks[x, 0]!);
+                chunks.Add(Chunks[x, Chunks.GetLength(1) - 1]!);
             }
 
             for (int y = 1; y < Chunks.GetLength(1) - 1; y++)
             {
-                chunks.Add(Chunks[0, y]);
-                chunks.Add(Chunks[Chunks.GetLength(0) - 1, y]);
+                chunks.Add(Chunks[0, y]!);
+                chunks.Add(Chunks[Chunks.GetLength(0) - 1, y]!);
             }
 
             return chunks.ToArray();

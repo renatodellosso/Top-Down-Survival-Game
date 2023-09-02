@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEngine;
+﻿using System.Collections.Generic;
 
 #nullable enable
 namespace Assets.Src.WorldGeneration
@@ -23,11 +18,11 @@ namespace Assets.Src.WorldGeneration
 
         private static readonly Biome[] BIOMES_LIST = new Biome[]
         {
-            new(BiomeId.Forest, "Forest", 
+            new(BiomeId.Forest, "Forest",
                 (chunk) => new(0, 120, 40, 255),
                 0.5f, 0.6f, 0.4f
             ),
-            
+
             new(BiomeId.Plains, "Plains",
                 (chunk) => new(40, 180, 0, 255),
                 0.5f, 0.45f, 0.3f

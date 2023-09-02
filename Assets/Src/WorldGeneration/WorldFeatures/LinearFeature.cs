@@ -1,13 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 
 #nullable enable
 namespace Assets.Src.WorldGeneration.WorldFeatures
 {
+    [Serializable]
     public abstract class LinearFeature : WorldFeature
     {
 
@@ -19,11 +16,11 @@ namespace Assets.Src.WorldGeneration.WorldFeatures
         {
             this.parentNode = parentNode;
 
-            if(parentNode != null)
+            if (parentNode != null)
             {
                 parentNode.childNode = this;
 
-                Direction = Chunk?.Pos - parentNode.Chunk?.Pos ?? new(0, 0); 
+                Direction = Chunk?.Pos - parentNode.Chunk?.Pos ?? new(0, 0);
             }
         }
     }

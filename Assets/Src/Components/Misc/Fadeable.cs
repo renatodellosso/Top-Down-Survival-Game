@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -20,7 +16,7 @@ namespace Assets.Src.Components.Misc
 
         public void FadeIn(float duration = DEFAULT_FADE_DURATION, Action? onFadeComplete = null)
         {
-            if(!gameObject.activeSelf)
+            if (!gameObject.activeSelf)
                 gameObject.SetActive(true);
 
             //Enable children
@@ -59,7 +55,7 @@ namespace Assets.Src.Components.Misc
                     gameObject.SetActive(false);
                 };
             }
-            
+
             //Fade in UI
             foreach (Graphic graphic in GetComponentsInChildren<Graphic>())
             {

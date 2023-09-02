@@ -1,8 +1,5 @@
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using Unity.Burst.CompilerServices;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -17,9 +14,9 @@ namespace Assets.Src.Components.Misc
             color = new Color(targetColor.r, targetColor.g, targetColor.b, 0);
 
             //print("Fading multiple graphics to " + targetColor + ", duration: " + duration);
-            
 
-            IEnumerable<Graphic> graphics = transform.GetComponentsInChildren<Graphic>().Where(g => g.CompareTag("Transition") || 
+
+            IEnumerable<Graphic> graphics = transform.GetComponentsInChildren<Graphic>().Where(g => g.CompareTag("Transition") ||
                 (g.transform.parent != null && g.transform.parent.CompareTag("Transition")));
             foreach (var graphic in graphics)
             {

@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -34,7 +32,7 @@ namespace Assets.Src
         public string name;
 
         public CancellableTask(string name, Action<CancellationToken> action, CancellationTokenSource cancellationTokenSource)
-            : base(()=>action(cancellationTokenSource.Token), cancellationTokenSource.Token)
+            : base(() => action(cancellationTokenSource.Token), cancellationTokenSource.Token)
         {
             this.name = name;
             this.cancellationTokenSource = cancellationTokenSource;
@@ -70,7 +68,7 @@ namespace Assets.Src
         public static void CancelAllTasks()
         {
             Utils.Log("Cancelling all active tasks...");
-            for(int i = 0; i < activeTasks.Count; i++)
+            for (int i = 0; i < activeTasks.Count; i++)
             {
                 ActiveTaskEntry entry = activeTasks[i];
 

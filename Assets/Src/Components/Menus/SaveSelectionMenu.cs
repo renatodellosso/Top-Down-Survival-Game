@@ -1,8 +1,3 @@
-using Assets.Src.Components.Misc;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
 namespace Assets.Src.Components.Menus
 {
     public class SaveSelectionMenu : ExitableMenu
