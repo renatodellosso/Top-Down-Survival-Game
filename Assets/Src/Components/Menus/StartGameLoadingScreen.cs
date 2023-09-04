@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace Assets.Src.Components.Menus
 {
@@ -19,6 +20,9 @@ namespace Assets.Src.Components.Menus
             instance = this;
 
             Text = GetComponentInChildren<TMP_Text>();
+
+            if (SceneManager.GetActiveScene().name == "Game")
+                StartCoroutine(StartGameManager.StartGameSecondary(this));
         }
 
         // Update is called once per frame
@@ -31,9 +35,9 @@ namespace Assets.Src.Components.Menus
         {
             print($"Starting game... Multiplayer: {multiplayer}");
 
-            instance.FadeIn();
-            
-            instance.StartCoroutine(StartGameManager.StartGame(instance, multiplayer));
+            instance.FadeIn(onFadeComplete: () => {
+                instance.StartCoroutine(StartGameManager.StartGameInitial(instance, multiplayer));
+            });
         }
     }
 }

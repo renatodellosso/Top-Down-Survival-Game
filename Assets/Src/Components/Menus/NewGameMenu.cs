@@ -39,7 +39,14 @@ namespace Assets.Src.Components.Menus
         {
             get
             {
-                return int.Parse(worldSizeInput.text);
+                try
+                {
+                    return int.Parse(worldSizeInput.text);
+                }
+                catch
+                {
+                    return WORLD_SIZE_PRESETS["Medium"];
+                }
             }
             set
             {
@@ -173,7 +180,11 @@ namespace Assets.Src.Components.Menus
             {
                 WorldSize = Math.Clamp(int.Parse(value), MIN_WORLD_SIZE, MAX_WORLD_SIZE);
             }
-            catch { return; }
+            catch
+            {
+                WorldSize = MIN_WORLD_SIZE;
+                return;
+            }
         }
 
         void OnChunkSizeDropdownChanged(int value)
@@ -187,25 +198,28 @@ namespace Assets.Src.Components.Menus
             {
                 ChunkSize = Math.Clamp(int.Parse(value), MIN_CHUNK_SIZE, MAX_CHUNK_SIZE);
             }
-            catch { return; }
+            catch
+            {
+                ChunkSize = MIN_CHUNK_SIZE;
+                return;
+            }
         }
 
         void StartGeneration()
         {
-            if (nameInput.text != "")
-            {
-                print("Starting world generation...");
-                worldGenerationLog.text = "Starting world generation...\n";
+            if (nameInput.text == "")
+                nameInput.text = "Unnamed World";
 
-                //Set settings to not interactable
-                SetInteractables(false);
+            print("Starting world generation...");
+            worldGenerationLog.text = "Starting world generation...\n";
 
-                WorldGeneration.WorldGeneration.StartGenerationAsync(WorldSize);
+            //Set settings to not interactable
+            SetInteractables(false);
 
-                //Start coroutine to update the display
-                StartCoroutine(WhileWorldGenerating());
-            }
-            else StartCoroutine(FlashWorldNameInput()); //No name specified, alert the user
+            WorldGeneration.WorldGeneration.StartGenerationAsync(WorldSize);
+
+            //Start coroutine to update the display
+            StartCoroutine(WhileWorldGenerating());
         }
 
         void SetInteractables(bool useable)

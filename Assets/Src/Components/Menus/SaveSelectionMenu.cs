@@ -16,6 +16,7 @@ namespace Assets.Src.Components.Menus
 
         public void NewGame()
         {
+            newGameMenu.multiplayer = multiplayer;
             FadeOut(onFadeComplete: () => newGameMenu.FadeIn());
         }
     }
