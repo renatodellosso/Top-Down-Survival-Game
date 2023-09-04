@@ -39,10 +39,12 @@ public class TaskManager : MonoBehaviour
         CancellableTask.CancelAllTasks();
     }
 
+#if UNITY_EDITOR
     [UnityEditor.Callbacks.DidReloadScripts]
     static void OnScriptsReloaded()
     {
         CancellableTask.CancelAllTasks();
     }
+#endif
 
 }

@@ -342,7 +342,7 @@ namespace Assets.Src.Components.Menus
         {
             print("Starting game...");
             StartGameLoadingScreen.instance = startGameLoadingScreen;
-            FadeOut(onFadeComplete: () => StartGameLoadingScreen.StartGame(multiplayer));
+            FadeOut(onFadeComplete: () => StartGameLoadingScreen.StartGame(false, multiplayer));
         }
 
     }

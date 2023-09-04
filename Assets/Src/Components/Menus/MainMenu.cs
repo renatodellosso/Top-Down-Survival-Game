@@ -1,4 +1,5 @@
 using Assets.Src.Components.Misc;
+using UnityEngine;
 
 namespace Assets.Src.Components.Menus
 {
@@ -52,7 +53,7 @@ namespace Assets.Src.Components.Menus
 #if UNITY_EDITOR
                 UnityEditor.EditorApplication.isPlaying = false;
 #else
-                Application.Quit();
+                UnityEngine.Application.Quit();
 #endif
             });
         }

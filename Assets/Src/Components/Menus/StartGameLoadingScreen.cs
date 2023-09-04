@@ -31,12 +31,14 @@ namespace Assets.Src.Components.Menus
 
         }
 
-        public static void StartGame(bool multiplayer)
+        public static void StartGame(bool loadSaveFile, bool multiplayer)
         {
-            print($"Starting game... Multiplayer: {multiplayer}");
+            print($"Starting game... Load Save File: {loadSaveFile}, Multiplayer: {multiplayer}");
+
+            if(instance == null) instance = FindAnyObjectByType<StartGameLoadingScreen>();
 
             instance.FadeIn(onFadeComplete: () => {
-                instance.StartCoroutine(StartGameManager.StartGameInitial(instance, multiplayer));
+                instance.StartCoroutine(StartGameManager.StartGameInitial(instance, loadSaveFile, multiplayer));
             });
         }
     }
