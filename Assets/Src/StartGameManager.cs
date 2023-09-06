@@ -5,6 +5,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Unity.Netcode;
+using Unity.Netcode.Transports.UTP;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -16,6 +18,11 @@ namespace Assets.Src
         static StartGameLoadingScreen loadingScreen;
 
         static bool multiplayer;
+
+        static NetworkManager networkManager;
+        static UnityTransport unityTransport, relayTransport;
+
+        static string LoadingMessage { set { loadingScreen.Text.text = value; } }
 
         public static IEnumerator StartGameInitial(StartGameLoadingScreen loadingScreen, bool loadSaveFile, bool multiplayer)
         {
@@ -30,7 +37,7 @@ namespace Assets.Src
 
             if(loadSaveFile)
             {
-                loadingScreen.Text.text = "Loading save file...";
+                LoadingMessage = "Loading save file...";
 
                 Task loadTask = SaveManager.LoadGameAsync();
 
@@ -45,8 +52,8 @@ namespace Assets.Src
                     yield return new WaitForSeconds(1f);
                 }
             }
-            
-            loadingScreen.Text.text = "Changing scenes...";
+
+            LoadingMessage = "Changing scenes...";
             yield return new WaitForEndOfFrame();
 
             SceneManager.LoadScene("Game");
@@ -57,9 +64,46 @@ namespace Assets.Src
             Utils.Log($"Starting game (secondary)... Multiplayer: {multiplayer}");
 
             StartGameManager.loadingScreen = loadingScreen;
-            loadingScreen.Text.text = "Loading...";
+            LoadingMessage = "Loading...";
 
             yield return new WaitForEndOfFrame();
+
+            InitNetworkManager();
+
+            yield return new WaitForEndOfFrame();
+
+            StartHost();
+        }
+        
+        static void InitNetworkManager()
+        {
+            Utils.Log("Initializing network manager...");
+            LoadingMessage = "Initializing network manager...";
+
+            networkManager = GameObject.FindAnyObjectByType<NetworkManager>();
+
+            //Find transports
+            IEnumerable<UnityTransport> transports = networkManager.GetComponents<UnityTransport>();
+            unityTransport = transports.Where(t => t.Protocol == UnityTransport.ProtocolType.UnityTransport).First();
+            relayTransport = transports.Where(t => t.Protocol == UnityTransport.ProtocolType.RelayUnityTransport).First();
+        }
+
+        static void StartHost()
+        {
+            if(multiplayer) StartRelayTransport();
+            else StartUnityTransport();
+        }
+
+        static void StartUnityTransport()
+        {
+            Utils.Log("Starting UnityTransport...");
+            LoadingMessage = "Starting UnityTransport...";
+        }
+
+        static void StartRelayTransport()
+        {
+            Utils.Log("Starting RelayTransport...");
+            LoadingMessage = "Starting RelayTransport...";
         }
 
     }
