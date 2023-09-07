@@ -7,24 +7,33 @@ using System.Text;
 using System.Threading.Tasks;
 using Unity.Netcode;
 using Unity.Netcode.Transports.UTP;
+using Unity.Services.Authentication;
+using Unity.Services.Core;
+using Unity.Services.Relay;
+using Unity.Services.Relay.Models;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
+#nullable enable
 namespace Assets.Src
 {
     public static class StartGameManager
     {
 
-        static StartGameLoadingScreen loadingScreen;
+        static StartGameLoadingScreen? loadingScreen;
 
         static bool multiplayer;
 
-        static NetworkManager networkManager;
-        static UnityTransport unityTransport, relayTransport;
+        static NetworkManager? networkManager;
+        static UnityTransport? unityTransport, relayTransport;
 
         static string LoadingMessage { set { loadingScreen.Text.text = value; } }
 
-        public static IEnumerator StartGameInitial(StartGameLoadingScreen loadingScreen, bool loadSaveFile, bool multiplayer)
+        static bool serverStarted = false;
+
+        static string? joinCode;
+
+        public static IEnumerator StartGameInitial(StartGameLoadingScreen loadingScreen, bool loadSaveFile, bool multiplayer, string? joinCode)
         {
             Utils.Log($"Starting game (initial)... Load Save File: {loadSaveFile}, Multiplayer: {multiplayer}");
 
@@ -73,6 +82,21 @@ namespace Assets.Src
             yield return new WaitForEndOfFrame();
 
             StartHost();
+
+            int iterator = 1;
+            while(!serverStarted)
+            {
+                iterator++;
+                iterator %= 4;
+
+                LoadingMessage = loadingScreen.Text.text.Replace(".", "") + new string('.', iterator);
+
+                yield return new WaitForSeconds(.5f);
+            }
+
+            //Set up the game world
+
+            loadingScreen.FadeOut();
         }
         
         static void InitNetworkManager()
@@ -86,11 +110,13 @@ namespace Assets.Src
             IEnumerable<UnityTransport> transports = networkManager.GetComponents<UnityTransport>();
             unityTransport = transports.Where(t => t.Protocol == UnityTransport.ProtocolType.UnityTransport).First();
             relayTransport = transports.Where(t => t.Protocol == UnityTransport.ProtocolType.RelayUnityTransport).First();
+
+            networkManager.OnServerStarted += OnServerStarted;
         }
 
         static void StartHost()
         {
-            if(multiplayer) StartRelayTransport();
+            if(multiplayer) StartRelayTransportAsync();
             else StartUnityTransport();
         }
 
@@ -98,12 +124,49 @@ namespace Assets.Src
         {
             Utils.Log("Starting UnityTransport...");
             LoadingMessage = "Starting UnityTransport...";
+
+            //Get rid of the relay transport
+            GameObject.Destroy(relayTransport);
+
+            //Set the network transport to the unity transport
+            networkManager!.NetworkConfig.NetworkTransport = unityTransport;
+
+            networkManager!.StartHost();
         }
 
-        static void StartRelayTransport()
+        static async void StartRelayTransportAsync()
         {
             Utils.Log("Starting RelayTransport...");
             LoadingMessage = "Starting RelayTransport...";
+
+
+            //Get rid of the unity transport
+            GameObject.Destroy(unityTransport);
+
+            //Set the network transport to the relay transport
+            networkManager!.NetworkConfig.NetworkTransport = relayTransport;
+
+            //Initialize Unity Services
+            if (UnityServices.State != ServicesInitializationState.Initialized)
+                await UnityServices.InitializeAsync();
+
+            //Authenticate user anonymously
+            if(!AuthenticationService.Instance.IsSignedIn)
+                await AuthenticationService.Instance.SignInAnonymouslyAsync();
+
+            //Create allocation
+            Allocation allocation = await RelayService.Instance.CreateAllocationAsync(Config.Network.MAX_PLAYERS_WHILE_HOSTING);
+            joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
+
+            networkManager!.StartHost();
+        }
+
+        static void OnServerStarted()
+        {
+            Utils.Log($"Server started!{(multiplayer ? " Join Code: " + joinCode : "")}");
+            LoadingMessage = "Server started!";
+
+            serverStarted = true;
         }
 
     }

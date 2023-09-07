@@ -6,13 +6,17 @@ namespace Assets.Src.Components.Menus
     public class MainMenu : Fadeable
     {
 
-        public SaveSelectionMenu saveSelectionMenu;
+        SaveSelectionMenu saveSelectionMenu;
+        JoinGameMenu joinGameMenu;
 
         // Start is called before the first frame update
         void Start()
         {
             saveSelectionMenu = transform.parent.GetComponentInChildren<SaveSelectionMenu>(includeInactive: true);
             saveSelectionMenu.previousMenu = this;
+
+            joinGameMenu = transform.parent.GetComponentInChildren<JoinGameMenu>(includeInactive: true);
+            joinGameMenu.previousMenu = this;
         }
 
         // Update is called once per frame
@@ -43,7 +47,7 @@ namespace Assets.Src.Components.Menus
 
         public void JoinGame()
         {
-            FadeOut();
+            FadeOut(onFadeComplete: () => joinGameMenu.FadeIn());
         }
 
         public void Quit()

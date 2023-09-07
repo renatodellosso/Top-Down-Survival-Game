@@ -180,6 +180,16 @@
       "dependencies": {},
       "url": "https://packages.unity.com"
     },
+    "com.unity.multiplayer.playmode": {
+      "version": "0.4.0",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {
+        "nuget.moq": "2.0.0-pre.2",
+        "com.unity.nuget.newtonsoft-json": "2.0.2"
+      },
+      "url": "https://packages.unity.com"
+    },
     "com.unity.multiplayer.tools": {
       "version": "1.1.0",
       "depth": 0,
@@ -383,6 +393,22 @@
       "source": "git",
       "dependencies": {},
       "hash": "66217422184ea3caa5e31320a58b83e6a1e08898"
+    },
+    "nuget.castle-core": {
+      "version": "2.0.0-pre.4",
+      "depth": 2,
+      "source": "registry",
+      "dependencies": {},
+      "url": "https://packages.unity.com"
+    },
+    "nuget.moq": {
+      "version": "2.0.0-pre.2",
+      "depth": 1,
+      "source": "registry",
+      "dependencies": {
+        "nuget.castle-core": "2.0.0-pre.4"
+      },
+      "url": "https://packages.unity.com"
     },
     "com.unity.modules.ai": {
       "version": "1.0.0",
