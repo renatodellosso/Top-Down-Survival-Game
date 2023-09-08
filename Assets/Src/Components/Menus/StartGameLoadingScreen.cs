@@ -23,7 +23,7 @@ namespace Assets.Src.Components.Menus
             Text = GetComponentInChildren<TMP_Text>();
 
             if (SceneManager.GetActiveScene().name == "Game")
-                StartCoroutine(StartGameManager.StartGameSecondary(this));
+                StartCoroutine(StartGameManager.Instance?.StartGameSecondary(this));
         }
 
         // Update is called once per frame
@@ -42,10 +42,11 @@ namespace Assets.Src.Components.Menus
         {
             print($"Starting game... Load Save File: {loadSaveFile}, Multiplayer: {multiplayer}, Join Code: {joinCode}");
 
-            if(instance == null) instance = FindAnyObjectByType<StartGameLoadingScreen>();
+            if(instance == null) instance = FindAnyObjectByType<StartGameLoadingScreen>(FindObjectsInactive.Include);
 
             instance.FadeIn(onFadeComplete: () => {
-                instance.StartCoroutine(StartGameManager.StartGameInitial(instance, loadSaveFile, multiplayer, joinCode));
+                StartGameManager startGameManager = new();
+                instance.StartCoroutine(startGameManager.StartGameInitial(instance, loadSaveFile, multiplayer, joinCode));
             });
         }
     }

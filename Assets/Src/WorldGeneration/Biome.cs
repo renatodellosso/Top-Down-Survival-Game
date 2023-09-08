@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-namespace Assets.Src.WorldGeneration
+namespace Assets.Src.World
 {
     public class Biome
     {

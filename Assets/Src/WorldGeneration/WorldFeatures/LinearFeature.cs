@@ -2,7 +2,7 @@
 using UnityEngine;
 
 #nullable enable
-namespace Assets.Src.WorldGeneration.WorldFeatures
+namespace Assets.Src.World.WorldFeatures
 {
     [Serializable]
     public abstract class LinearFeature : WorldFeature

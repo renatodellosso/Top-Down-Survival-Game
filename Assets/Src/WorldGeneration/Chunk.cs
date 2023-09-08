@@ -4,7 +4,7 @@ using System.Linq;
 using UnityEngine;
 
 #nullable enable
-namespace Assets.Src.WorldGeneration
+namespace Assets.Src.World
 {
     [Serializable]
     public class Chunk

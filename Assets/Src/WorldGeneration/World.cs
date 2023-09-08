@@ -4,15 +4,14 @@ using System.Linq;
 using UnityEngine;
 
 #nullable enable
-namespace Assets.Src.WorldGeneration
+namespace Assets.Src.World
 {
     [Serializable]
     public class World
     {
 
         public static World? instance;
-
-         Chunk?[,]? chunksInternal;
+        readonly Chunk?[,]? chunksInternal;
 
         /// <summary>
         /// Avoid accessing this directly, use <see cref="GetChunk(int, int)"/> instead

@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 
 #nullable enable
-namespace Assets.Src.WorldGeneration
+namespace Assets.Src.World
 {
     public enum BiomeId
     {

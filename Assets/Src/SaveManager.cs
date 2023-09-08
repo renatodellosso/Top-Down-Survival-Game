@@ -1,4 +1,4 @@
-﻿using Assets.Src.WorldGeneration;
+﻿using Assets.Src.World;
 using Assets.Src.SerializationSurrogates;
 using System;
 using System.Collections.Generic;
@@ -151,7 +151,7 @@ namespace Assets.Src
                 Directory.CreateDirectory(SavePath);
 
                 //Save the world data
-                World? world = World.instance;
+                World.World? world = World.World.instance;
                 if (world == null) return;
 
                 //Save world data
@@ -192,7 +192,7 @@ namespace Assets.Src
                 if (binaryFormatter == null) InitBinaryFormatter();
 
                 //Load world data
-                World.instance = LoadObj<World>("world");
+                World.World.instance = LoadObj<World.World>("world");
 
                 stopwatch.Stop();
 

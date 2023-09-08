@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-namespace Assets.Src.WorldGeneration.WorldFeatures
+namespace Assets.Src.World.WorldFeatures
 {
     [Serializable]
     public class Road : LinearFeature

@@ -1,4 +1,4 @@
-﻿using Assets.Src.WorldGeneration.WorldFeatures;
+﻿using Assets.Src.World.WorldFeatures;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,16 +7,18 @@ using System.Threading.Tasks;
 using UnityEngine;
 
 #nullable enable
-namespace Assets.Src.WorldGeneration
+namespace Assets.Src.World
 {
-    public static class WorldGeneration
+    public sealed class WorldGeneration
     {
 
-        public static Task? task;
+        public static WorldGeneration? Instance { get; private set; }
 
-        static int size;
+        public Task? Task { get; private set; }
 
-        static World? world;
+        readonly int size;
+
+        World? world;
 
         static Func<Chunk?, Color32> getChunkColor = (chunk) => new Color32(170, 170, 170, 255);
 
@@ -24,14 +26,29 @@ namespace Assets.Src.WorldGeneration
 
         const float ROAD_CHANCE_PER_BORDER = 0.03f;
 
-        public static void StartGenerationAsync(int size)
+        public WorldGeneration(int size)
         {
-            WorldGeneration.size = size;
-
-            task = CancellableTask.Run("MainWorldGeneration", GenerateWorldAsync);
+            Instance = this;
+            this.size = size;
         }
 
-        static void GenerateWorldAsync(CancellationToken cancellationToken)
+
+        /// <summary>
+        /// Frees up the resources used by the world generation instance. Deletes the instance.
+        /// </summary>
+        public static void CleanUp()
+        {
+            Instance = null;
+        }
+
+        public static void StartGenerationAsync(int size)
+        {
+            WorldGeneration worldGeneration = new(size);
+
+            worldGeneration.Task = CancellableTask.Run("MainWorldGeneration", worldGeneration.GenerateWorldAsync);
+        }
+
+        void GenerateWorldAsync(CancellationToken cancellationToken)
         {
             try
             {
@@ -62,7 +79,7 @@ namespace Assets.Src.WorldGeneration
             }
         }
 
-        public static Color32[,] GetDisplayColors()
+        public Color32[,] GetDisplayColors()
         {
             Color32[,] colors = new Color32[size, size];
 
@@ -73,7 +90,7 @@ namespace Assets.Src.WorldGeneration
             return colors;
         }
 
-        static void GenerateInitialChunkStats()
+        void GenerateInitialChunkStats()
         {
             Utils.Log("Generating initial chunk stats...");
 
@@ -103,7 +120,7 @@ namespace Assets.Src.WorldGeneration
             }
         }
 
-        static void GenerateFinalChunkStats()
+        void GenerateFinalChunkStats()
         {
             Utils.Log("Generating final chunk stats...");
 
@@ -124,7 +141,7 @@ namespace Assets.Src.WorldGeneration
             Utils.Log("Finished generating final chunk stats");
         }
 
-        static void SmoothSingleChunkStat(int iterations, Func<Chunk, float> getStat, Action<Chunk, float> setStat)
+        void SmoothSingleChunkStat(int iterations, Func<Chunk, float> getStat, Action<Chunk, float> setStat)
         {
             Utils.Log("Smoothing chunk stat...");
 
@@ -176,7 +193,7 @@ namespace Assets.Src.WorldGeneration
             }
         }
 
-        static void NormalizeSingleChunkStat(Func<Chunk, float> getStat, Action<Chunk, float> setStat)
+        void NormalizeSingleChunkStat(Func<Chunk, float> getStat, Action<Chunk, float> setStat)
         {
             Utils.Log("Normalizing chunk stat...");
             float minStat = float.MaxValue, maxStat = float.MinValue;
@@ -213,7 +230,7 @@ namespace Assets.Src.WorldGeneration
             }
         }
 
-        static void DetermineBiomes()
+        void DetermineBiomes()
         {
             Utils.Log("Determining biomes...");
 
@@ -232,7 +249,7 @@ namespace Assets.Src.WorldGeneration
             }
         }
 
-        static void GenerateRoads(CancellationToken cancellationToken)
+        void GenerateRoads(CancellationToken cancellationToken)
         {
             Utils.Log("Generating roads...");
 

@@ -1,3 +1,4 @@
+using Assets.Src.World;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -216,7 +217,7 @@ namespace Assets.Src.Components.Menus
             //Set settings to not interactable
             SetInteractables(false);
 
-            WorldGeneration.WorldGeneration.StartGenerationAsync(WorldSize);
+            WorldGeneration.StartGenerationAsync(WorldSize);
 
             //Start coroutine to update the display
             StartCoroutine(WhileWorldGenerating());
@@ -253,10 +254,11 @@ namespace Assets.Src.Components.Menus
             do
             {
                 UpdateWorldMapDisplay();
-                Utils.Log($"World Generation Task Complete: {WorldGeneration.WorldGeneration.task.IsCompleted}, Successful: {WorldGeneration.WorldGeneration.task.IsCompletedSuccessfully}");
+                Utils.Log($"World Generation Task Complete: {WorldGeneration.Instance.Task.IsCompleted}, " +
+                    $"Successful: {WorldGeneration.Instance.Task.IsCompletedSuccessfully}");
                 yield return new WaitForSeconds(0.5f);
             }
-            while (!WorldGeneration.WorldGeneration.task.IsCompleted);
+            while (!WorldGeneration.Instance.Task.IsCompleted);
 
             UpdateWorldMapDisplay();
             OnWorldGenerationComplete();
@@ -265,7 +267,7 @@ namespace Assets.Src.Components.Menus
         void UpdateWorldMapDisplay()
         {
             //Convert the world map to an array of colors
-            Color32[,] worldMapDisplayColors = WorldGeneration.WorldGeneration.GetDisplayColors();
+            Color32[,] worldMapDisplayColors = WorldGeneration.Instance.GetDisplayColors();
             Color32[] mapColors = new Color32[worldMapDisplayColors.GetLength(0) * worldMapDisplayColors.GetLength(1)];
 
             for (int x = 0; x < worldMapDisplayColors.GetLength(0); x++)
@@ -289,7 +291,8 @@ namespace Assets.Src.Components.Menus
 
         void OnWorldGenerationComplete()
         {
-            Utils.Log($"World Generation Complete: {WorldGeneration.WorldGeneration.task.IsCompleted}, Successful: {WorldGeneration.WorldGeneration.task.IsCompletedSuccessfully}");
+            Utils.Log($"World Generation Complete: {WorldGeneration.Instance.Task.IsCompleted}, " +
+                $"Successful: {WorldGeneration.Instance.Task.IsCompletedSuccessfully}");
             worldGenerationLog.text += "World generation complete!\n";
 
             //Save the world
@@ -340,6 +343,8 @@ namespace Assets.Src.Components.Menus
 
         void PlayGame()
         {
+            WorldGeneration.CleanUp();
+
             print("Starting game...");
             StartGameLoadingScreen.instance = startGameLoadingScreen;
             FadeOut(onFadeComplete: () => StartGameLoadingScreen.StartGame(false, multiplayer));
