@@ -67,7 +67,7 @@ namespace Assets.Src.Components.Menus
         {
             Utils.Log($"Loading save file {saveFile}...");
 
-            SaveManager.saveName = saveFile;
+            SaveManager.SaveName = saveFile;
 
             StartGameLoadingScreen.instance = startGameLoadingScreen;
 

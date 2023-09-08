@@ -321,7 +321,7 @@ namespace Assets.Src.Components.Menus
 
             worldGenerationLog.text += $"Save name: {saveName}\n";
 
-            SaveManager.saveName = saveName;
+            SaveManager.SaveName = saveName;
 
             worldGenerationLog.text += "Saving world data...\n";
 

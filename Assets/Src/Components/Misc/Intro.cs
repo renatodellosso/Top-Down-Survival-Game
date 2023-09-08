@@ -1,6 +1,11 @@
 using Assets.Src.Components.Menus;
 using UnityEngine;
 using UnityEngine.UI;
+using Unity.Netcode;
+using Unity.Multiplayer.Playmode;
+using System.Linq;
+using System.Collections;
+using System.Threading.Tasks;
 
 namespace Assets.Src.Components.Misc
 {
@@ -13,12 +18,60 @@ namespace Assets.Src.Components.Misc
 
         public MainMenu menu;
 
+        string playerTag;
+
         void Awake()
         {
-            print("Intro awake");
+            playerTag = CurrentPlayer.ReadOnlyTag();
+            print("Player Tag: " + playerTag);
+
+            if (playerTag == "Untagged")
+                StandardIntro();
+            else if (playerTag == "SkipMainMenu")
+                SkipMainMenu();
+            else if (playerTag == "StartHostImmediately")
+                StartHostImmediately();
+            else
+            {
+                Debug.LogError("Unknown player tag: " + playerTag);
+                StandardIntro();
+            }
+        }
+
+        void StandardIntro()
+        {
+            print("Running standard intro...");
             foreach (Transform child in transform)
             {
                 child.gameObject.SetActive(true);
+            }
+        }
+
+        void SkipMainMenu()
+    {
+            print("Skipping main menu...");
+            
+            menu.gameObject.SetActive(true);
+            menu.Enter();
+            Destroy(gameObject);
+        }
+
+        void StartHostImmediately()
+        {
+            print("Starting host immediately...");
+
+            Destroy(gameObject);
+
+            //Load most recent save
+            string[] saves = SaveManager.GetSaveFileNames();
+            if(saves.Length > 0)
+            {
+                SaveManager.SaveName = saves.First();
+                StartGameLoadingScreen.StartGame(true, true);
+            }
+            else
+            {
+                Debug.LogError("No save files found");
             }
         }
 

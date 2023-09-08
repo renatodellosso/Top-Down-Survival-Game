@@ -22,8 +22,23 @@ namespace Assets.Src
          * -world
          */
 
-        public static string saveName = "", basePath = "";
-        static string SavePath => Path.Combine(basePath, saveName);
+        public static string saveName = "";
+        public static string SaveName
+        {
+            set
+            {
+                saveName = value;
+            }
+            private get
+            {
+                if (saveName == "")
+                    throw new Exception("Save name not set");
+                return saveName;
+            }
+        }
+
+        private static string basePath = "";
+        static string SavePath => Path.Combine(basePath, SaveName);
 
         //Static readonly uses Pascal-case (upper camel case)
         static BinaryFormatter? binaryFormatter;
@@ -34,7 +49,7 @@ namespace Assets.Src
         }
 
         /// <summary>
-        /// Gets the names of all the save files, in order of most recently accessed
+        /// Gets the names of all the save files, in order of most recently accessed (most recent first)
         /// </summary>
         /// <returns>An array of the save file names</returns>
         public static string[] GetSaveFileNames()
@@ -136,7 +151,7 @@ namespace Assets.Src
 
         static void SaveWorldAsync()
         {
-            Utils.Log($"Saving world {saveName}...");
+            Utils.Log($"Saving world {SaveName}...");
 
             Stopwatch stopwatch = new();
             stopwatch.Start();
@@ -164,7 +179,7 @@ namespace Assets.Src
             }
             catch (Exception e)
             {
-                Utils.Log(e, $"Error saving world {saveName}");
+                Utils.Log(e, $"Error saving world {SaveName}");
             }
         }
 
@@ -173,7 +188,7 @@ namespace Assets.Src
         /// </summary>
         public static async Task LoadGameAsync()
         {
-            Utils.Log($"Loading game: {saveName}...");
+            Utils.Log($"Loading game: {SaveName}...");
             //Set base filepath
             basePath = Application.persistentDataPath; //We can only do this on the main thread
             await Task.Run(LoadGame);
@@ -181,7 +196,7 @@ namespace Assets.Src
 
         static void LoadGame()
         {
-            Utils.Log($"Loading game: {saveName}...");
+            Utils.Log($"Loading game: {SaveName}...");
 
             Stopwatch stopwatch = new();
             stopwatch.Start();
@@ -201,7 +216,7 @@ namespace Assets.Src
             }
             catch (Exception e)
             {
-                Utils.Log(e, $"Error loading game {saveName}");
+                Utils.Log(e, $"Error loading game {SaveName}");
             }
         }
     }

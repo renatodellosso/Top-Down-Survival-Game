@@ -23,7 +23,9 @@ namespace Assets.Src.Components.Menus
             Text = GetComponentInChildren<TMP_Text>();
 
             if (SceneManager.GetActiveScene().name == "Game")
-                StartCoroutine(StartGameManager.Instance?.StartGameSecondary(this));
+                if (StartGameManager.Instance != null)
+                    StartCoroutine(StartGameManager.Instance?.StartGameSecondary(this));
+                else StartGameFromGameScene();
         }
 
         // Update is called once per frame
@@ -48,6 +50,23 @@ namespace Assets.Src.Components.Menus
                 StartGameManager startGameManager = new();
                 instance.StartCoroutine(startGameManager.StartGameInitial(instance, loadSaveFile, multiplayer, joinCode));
             });
+        }
+
+        static void StartGameFromGameScene()
+        {
+            print("Starting game from game scene...");
+            
+            string[] saveFiles = SaveManager.GetSaveFileNames();
+
+            if(saveFiles.Length == 0)
+            {
+                Debug.LogError("No save files found!");
+                return;
+            }
+
+            SaveManager.SaveName = saveFiles[0];
+
+            StartGame(true, true);
         }
     }
 }
