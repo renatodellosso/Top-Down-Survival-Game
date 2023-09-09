@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
+#nullable enable
 namespace Assets.Src
 {
     public static class Utils
@@ -63,6 +64,14 @@ namespace Assets.Src
             Task task = Task.Run(action, source.Token);
 
             return task;
+        }
+
+        public static string FormatText(string text, string? color = null)
+        {
+            if(color != null)
+                text = $"<color={color}>{text}</color>";
+
+            return text;
         }
 
     }

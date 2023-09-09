@@ -1,4 +1,5 @@
-﻿using Assets.Src.Components.Menus;
+﻿using Assets.Src.Components.Managers;
+using Assets.Src.Components.Menus;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -130,7 +131,7 @@ namespace Assets.Src
             }
 
             //Set up the game world
-
+            ChatManager.Send("Game loaded!");
             loadingScreen.FadeOut(onFadeComplete: CleanUp);
         }
         
