@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Numerics;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -72,6 +74,20 @@ namespace Assets.Src
                 text = $"<color={color}>{text}</color>";
 
             return text;
+        }
+
+        /// <summary>
+        /// Draws an X at the given position. Must have Gizmos enabled to see it
+        /// </summary>
+        public static void MarkPos(UnityEngine.Vector2 pos, float size = .25f, float duration = 5f, UnityEngine.Color? color = null)
+        {
+#if UNITY_EDITOR
+            if(color == null)
+                color = UnityEngine.Color.red;
+
+            UnityEngine.Debug.DrawLine(pos + new UnityEngine.Vector2(-size, -size), pos + new UnityEngine.Vector2(size, size), color.Value, duration);
+            UnityEngine.Debug.DrawLine(pos + new UnityEngine.Vector2(-size, size), pos + new UnityEngine.Vector2(size, -size), color.Value, duration);
+#endif
         }
 
     }

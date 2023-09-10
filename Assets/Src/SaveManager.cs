@@ -10,6 +10,8 @@ using UnityEngine;
 using System.Diagnostics;
 using System.Linq;
 using Unity.Collections.LowLevel.Unsafe;
+using System.Security.Cryptography;
+using System.Text;
 
 #nullable enable
 namespace Assets.Src
@@ -17,14 +19,33 @@ namespace Assets.Src
     public static class SaveManager
     {
 
-        /* Save file structure
+        /* Save file structure:
+         * accounts.dat
          * saveName/
-         * -world
-         * -saveId
+         * -players/
+         * --playerId.player
+         * -world.dat
+         * -serverId.dat
          */
 
+        //Random Note: When using Path.Combine, don't put slashes at the start of the path, it will ignore the previous path!
+
+        static readonly SHA256 SHA256 = SHA256.Create();
+
         private static string saveName = "";
-        public static Guid SaveId { get; private set; } = Guid.Empty;
+
+        private static Guid serverIdInternal = Guid.Empty;
+        public static string ServerId
+        {
+            get
+            {
+                return Convert.ToBase64String(SHA256.ComputeHash(Encoding.UTF8.GetBytes(serverIdInternal.ToString())));
+            }
+            private set
+            {
+                serverIdInternal = new Guid(value);
+            }
+        }
 
         public static string SaveName
         {
@@ -76,14 +97,14 @@ namespace Assets.Src
         /// </summary>
         /// <param name="obj">The object to serialize</param>
         /// <param name="relPath">The filename, relative to base save path</param>
-        static bool SaveObj(object obj, string relPath)
+        static bool SaveObj(object obj, string relPath, bool relToSave = true)
         {
             Utils.Log($"Saving object at path: {relPath}... Object Type: {obj.GetType()}");
 
             try
             {
                 //Get path
-                string filePath = Path.Combine(SavePath, relPath);
+                string filePath = Path.Combine(relToSave ? SavePath : Application.persistentDataPath, relPath);
 
                 //Open file
                 FileStream file = File.Open(filePath, FileMode.OpenOrCreate);
@@ -104,14 +125,14 @@ namespace Assets.Src
             return true;
         }
 
-        static T? LoadObj<T>(string relPath)
+        static T? LoadObj<T>(string relPath, bool relToSave = true)
         {
             Utils.Log($"Loading object at path: {relPath}... Object Type: {typeof(T)}");
 
             try
             {
                 //Get path
-                string filePath = Path.Combine(SavePath, relPath);
+                string filePath = Path.Combine(relToSave ? SavePath : Application.persistentDataPath, relPath);
 
                 //Open file
                 FileStream file = File.Open(filePath, FileMode.Open);
@@ -166,21 +187,23 @@ namespace Assets.Src
 
 
                 //Make sure the save directory exists
+                //Note: We can only make 1 directory at a time with this
                 Directory.CreateDirectory(SavePath);
+                Directory.CreateDirectory(Path.Combine(SavePath, "players"));
 
                 //Save the world data
                 World.World? world = World.World.instance;
                 if (world == null) return;
 
                 //Save world data
-                SaveObj(world, "world");
+                SaveObj(world, "world.dat");
 
                 //Save world id
-                if (!File.Exists(Path.Combine(SavePath, "/saveId")))
+                if (!File.Exists(Path.Combine(SavePath, "/serverid.dat")))
                 {
                     Utils.Log("Writing save id...");
-                    SaveId = Guid.NewGuid();
-                    SaveObj(SaveId, "saveId");
+                    serverIdInternal = Guid.NewGuid();
+                    SaveObj(serverIdInternal, "serverid.dat");
                 }
 
                 stopwatch.Stop();
@@ -218,20 +241,72 @@ namespace Assets.Src
                 if (binaryFormatter == null) InitBinaryFormatter();
 
                 //Load world data
-                World.World.instance = LoadObj<World.World>("world");
+                World.World.instance = LoadObj<World.World>("world.dat");
 
                 //Load world id
-                SaveId = LoadObj<Guid>("saveId");
+                serverIdInternal = LoadObj<Guid>("serverid.dat");
 
                 stopwatch.Stop();
 
-                Utils.Log($"Game loaded in {stopwatch.Elapsed}. Save Id: {SaveId}");
+                Utils.Log($"Game loaded in {stopwatch.Elapsed}.");
                 return;
             }
             catch (Exception e)
             {
                 Utils.Log(e, $"Error loading game {SaveName}");
             }
+        }
+
+        /// <summary>
+        /// Loads the account file and searchs for the server id. If it doesn't exist, it creates a new one.
+        /// </summary>
+        /// <param name="serverId">The hash of the server ID</param>
+        /// <returns>The hash of the account GUID</returns>
+        public static string GetServerAccountHash(string serverId)
+        {
+            Utils.Log($"Loading account id...");
+
+            Dictionary<string, Guid> accounts;
+
+            if(File.Exists(Path.Combine(Application.persistentDataPath, "accounts.dat")))
+            {
+                accounts = LoadObj<Dictionary<string, Guid>>("accounts.dat", false)!;
+            }
+            else
+            {
+                accounts = new();
+            }
+
+            if (!accounts.TryGetValue(serverId, out Guid guid))
+            {
+                guid = Guid.NewGuid();
+                accounts.Add(serverId, guid);
+                SaveObj(accounts, "accounts.dat", false);
+            }
+
+            byte[] hash = SHA256.ComputeHash(Encoding.UTF8.GetBytes(guid.ToString()));
+            return Convert.ToBase64String(hash);
+        }
+
+        public static Player LoadPlayerData(string accountId)
+        {
+            Utils.Log("Loading player data...");
+
+            Player player;
+            if(File.Exists(Path.Combine(SavePath, $"players/{accountId}.player")))
+            {
+                player = LoadObj<Player>($"players/{accountId}.player")!;
+            }
+            else
+            {
+                Utils.Log("Creating new player data...");
+
+                player = new(accountId);
+
+                SaveObj(player, $"players/{accountId}.player");
+            }
+
+            return player;
         }
     }
 }

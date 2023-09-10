@@ -56,7 +56,6 @@ namespace Assets.Src.Components.Managers
             chatLog.CrossFadeAlpha(1, LOG_FADE_IN_TIME, false);
 
             lastMessageTime = Time.time;
-            print(lastMessageTime);
         }
 
         void CheckIfShouldFadeLog()

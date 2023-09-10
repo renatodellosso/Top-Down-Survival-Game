@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Assets.Src.Components.Gameplay;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,7 +13,7 @@ namespace Assets.Src
 
         static PlayerManager? instance;
 
-        readonly Dictionary<Guid, Player> players;
+        readonly Dictionary<string, Player> players;
 
         public PlayerManager()
         {
@@ -21,14 +22,16 @@ namespace Assets.Src
             players = new();
         }
 
-        public static Player? GetPlayer(Guid id)
+        public static Player? GetPlayer(string id)
         {
             return instance?.players.TryGetValue(id, out Player player) ?? false ? player : null;
         }
 
-        public static void AddPlayer(Guid id)
+        public static void AddPlayer(string id, PlayerController controller)
         {
-
+            Player player = SaveManager.LoadPlayerData(id);
+            instance?.players.Add(id, player);
+            controller.Player.Value = player;
         }
 
     }
