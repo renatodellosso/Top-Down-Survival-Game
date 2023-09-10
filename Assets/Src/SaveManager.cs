@@ -20,9 +20,12 @@ namespace Assets.Src
         /* Save file structure
          * saveName/
          * -world
+         * -saveId
          */
 
-        public static string saveName = "";
+        private static string saveName = "";
+        public static Guid SaveId { get; private set; } = Guid.Empty;
+
         public static string SaveName
         {
             set
@@ -124,7 +127,7 @@ namespace Assets.Src
             catch (IOException e)
             {
                 Utils.Log(e, $"Error loading object at path: {relPath}, Object Type: {typeof(T)}");
-                return default(T);
+                return default;
             }
         }
 
@@ -172,6 +175,14 @@ namespace Assets.Src
                 //Save world data
                 SaveObj(world, "world");
 
+                //Save world id
+                if (!File.Exists(Path.Combine(SavePath, "/saveId")))
+                {
+                    Utils.Log("Writing save id...");
+                    SaveId = Guid.NewGuid();
+                    SaveObj(SaveId, "saveId");
+                }
+
                 stopwatch.Stop();
 
                 Utils.Log($"World saved in {stopwatch.Elapsed}");
@@ -209,9 +220,12 @@ namespace Assets.Src
                 //Load world data
                 World.World.instance = LoadObj<World.World>("world");
 
+                //Load world id
+                SaveId = LoadObj<Guid>("saveId");
+
                 stopwatch.Stop();
 
-                Utils.Log($"Game loaded in {stopwatch.Elapsed}");
+                Utils.Log($"Game loaded in {stopwatch.Elapsed}. Save Id: {SaveId}");
                 return;
             }
             catch (Exception e)

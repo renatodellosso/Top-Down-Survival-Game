@@ -249,6 +249,10 @@ namespace Assets.Src
         {
             Utils.Log($"Server started!{(multiplayer ? " Join Code: " + joinCode : "")}");
             LoadingMessage = "Server started!";
+
+            ChatManager.Send("Server started!");
+            if (joinCode != null)
+                ChatManager.Send($"Your session join code is {Utils.FormatText(joinCode, "yellow")}");
         }
 
     }

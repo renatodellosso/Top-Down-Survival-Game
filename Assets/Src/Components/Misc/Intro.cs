@@ -27,8 +27,8 @@ namespace Assets.Src.Components.Misc
 
             if (playerTag == "Untagged")
                 StandardIntro();
-            else if (playerTag == "SkipMainMenu")
-                SkipMainMenu();
+            else if (playerTag == "SkipIntro")
+                SkipIntro();
             else if (playerTag == "StartHostImmediately")
                 StartHostImmediately();
             else
@@ -47,7 +47,7 @@ namespace Assets.Src.Components.Misc
             }
         }
 
-        void SkipMainMenu()
+        void SkipIntro()
     {
             print("Skipping main menu...");
             
