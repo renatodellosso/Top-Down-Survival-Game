@@ -268,7 +268,10 @@ namespace Assets.Src
 
             Dictionary<string, Guid> accounts;
 
-            if(File.Exists(Path.Combine(Application.persistentDataPath, "accounts.dat")))
+            //Make sure the binary formatter is initialized
+            if (binaryFormatter == null) InitBinaryFormatter();
+
+            if (File.Exists(Path.Combine(Application.persistentDataPath, "accounts.dat")))
             {
                 accounts = LoadObj<Dictionary<string, Guid>>("accounts.dat", false)!;
             }

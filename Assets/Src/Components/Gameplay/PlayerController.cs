@@ -12,7 +12,19 @@ namespace Assets.Src.Components.Gameplay {
 
         new Rigidbody2D rigidbody;
 
-        public NetworkVariable<Player> Player { get; protected set; } = new();
+        //It seems this can't be a property
+        readonly NetworkVariable<Player> player = new();
+        public Player Player
+        {
+            get
+            {
+                return player.Value;
+            }
+            private set
+            {
+                player.Value = value;
+            }
+        }
 
         KeyCode[] userInputs = Array.Empty<KeyCode>();
 
@@ -25,6 +37,9 @@ namespace Assets.Src.Components.Gameplay {
         void Start()
         {
             rigidbody = GetComponent<Rigidbody2D>();
+
+            if (IsServer)
+                SetAccountIdClientRpc(SaveManager.ServerId, Utils.OnlySendRpcTo(OwnerClientId));
         }
 
         //OnNetworkSpawn must be overridden and public in order to run when the NetworkObject is spawned
@@ -33,14 +48,12 @@ namespace Assets.Src.Components.Gameplay {
             base.OnNetworkSpawn();
 
             Utils.Log("Player spawned on network");
-
-            if (IsServer)
-                SetAccountIdClientRpc(SaveManager.ServerId);
         }
 
         [ClientRpc]
-        void SetAccountIdClientRpc(string serverId)
+        void SetAccountIdClientRpc(string serverId, ClientRpcParams clientRpcParams = default)
         {
+            Utils.Log("Received RPC to load account ID");
             SetAccountIdServerRpc(SaveManager.GetServerAccountHash(serverId));
         }
 
@@ -48,6 +61,11 @@ namespace Assets.Src.Components.Gameplay {
         void SetAccountIdServerRpc(string playerId)
         {
             PlayerManager.AddPlayer(playerId, this);
+        }
+
+        public void SetPlayer(Player player)
+        {
+            Player = player;
         }
 
         void FixedUpdate()
@@ -90,39 +108,47 @@ namespace Assets.Src.Components.Gameplay {
 
         void HandleUserInputs()
         {
-            Vector2 movement = Vector2.zero;
+                Vector2 movement = Vector2.zero;
 
-            //Handle each input
-            foreach (KeyCode input in userInputs)
-            {
-                switch (input)
+                //Handle each input
+                foreach (KeyCode input in userInputs)
                 {
-                    case KeyCode.W:
-                        movement += Vector2.up;
-                        break;
-                    case KeyCode.A:
-                        movement += Vector2.left;
-                        break;
-                    case KeyCode.S:
-                        movement += Vector2.down;
-                        break;
-                    case KeyCode.D:
-                        movement += Vector2.right;
-                        break;
+                    switch (input)
+                    {
+                        case KeyCode.W:
+                            movement += Vector2.up;
+                            break;
+                        case KeyCode.A:
+                            movement += Vector2.left;
+                            break;
+                        case KeyCode.S:
+                            movement += Vector2.down;
+                            break;
+                        case KeyCode.D:
+                            movement += Vector2.right;
+                            break;
+                    }
+                }
+
+                //Adjust movement for diagonal
+                if (movement.y != 0 && movement.x != 0)
+                {
+                    movement /= Mathf.Sqrt(2);
+                }
+
+            try
+            {
+                //Apply movement
+                if (movement != Vector2.zero)
+                {
+                    print($"Player.Value: {player.Value}, Speed: {player.Value?.Speed}");
+                    movement *= player.Value.Speed * BASE_SPEED * Time.deltaTime;
+                    rigidbody.MovePosition(rigidbody.position + movement);
                 }
             }
-
-            //Adjust movement for diagonal
-            if (movement.y != 0 && movement.x != 0)
+            catch (Exception e)
             {
-                movement /= Mathf.Sqrt(2);
-            }
-
-            //Apply movement
-            if (movement != Vector2.zero)
-            {
-                movement *= Player.Value.Speed * BASE_SPEED * Time.deltaTime;
-                rigidbody.MovePosition(rigidbody.position + movement);
+                Utils.Log(e, "Error handling user inputs");
             }
 
             //Reset inputs

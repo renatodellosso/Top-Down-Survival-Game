@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Numerics;
 using System.Threading;
 using System.Threading.Tasks;
+using Unity.Netcode;
 
 #nullable enable
 namespace Assets.Src
@@ -88,6 +89,17 @@ namespace Assets.Src
             UnityEngine.Debug.DrawLine(pos + new UnityEngine.Vector2(-size, -size), pos + new UnityEngine.Vector2(size, size), color.Value, duration);
             UnityEngine.Debug.DrawLine(pos + new UnityEngine.Vector2(-size, size), pos + new UnityEngine.Vector2(size, -size), color.Value, duration);
 #endif
+        }
+
+        public static ClientRpcParams OnlySendRpcTo(params ulong[] targetIds)
+        {
+            return new ClientRpcParams
+            {
+                Send = new ClientRpcSendParams
+                {
+                    TargetClientIds = new List<ulong>(targetIds)
+                }
+            };
         }
 
     }

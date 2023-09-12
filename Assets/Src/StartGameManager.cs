@@ -14,6 +14,7 @@ using Unity.Services.Authentication;
 using Unity.Services.Core;
 using Unity.Services.Relay;
 using Unity.Services.Relay.Models;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -129,6 +130,8 @@ namespace Assets.Src
                 LoadingMessage = "Failed to start network";
                 yield break;
             }
+
+            networkManager.OnClientConnectedCallback += (id) => ChatManager.Send("New client connected!");
 
             //Set up the game world
             ChatManager.Send("Game loaded!");

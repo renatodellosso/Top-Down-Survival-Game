@@ -29,9 +29,16 @@ namespace Assets.Src
 
         public static void AddPlayer(string id, PlayerController controller)
         {
+            Utils.Log("Adding player...");
+
             Player player = SaveManager.LoadPlayerData(id);
-            instance?.players.Add(id, player);
-            controller.Player.Value = player;
+            if(!instance?.players.TryAdd(id, player) ?? false)
+            {
+                Utils.Log("Player already exists, fetching from dictionary...");
+                player = instance!.players[id];
+            }
+
+            controller.SetPlayer(player);
         }
 
     }
