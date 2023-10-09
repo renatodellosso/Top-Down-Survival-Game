@@ -2,6 +2,7 @@ using Assets.Src;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using Unity.Netcode;
 using UnityEditor;
 using UnityEngine;
@@ -9,6 +10,8 @@ using UnityEngine;
 namespace Assets.Src.Components.Gameplay {
     public class PlayerController : NetworkBehaviour
     {
+
+        public static PlayerController Instance { get; private set; }
 
         new Rigidbody2D rigidbody;
 
@@ -26,12 +29,24 @@ namespace Assets.Src.Components.Gameplay {
             }
         }
 
-        KeyCode[] userInputs = Array.Empty<KeyCode>();
-
         const float BASE_SPEED = 2.5f;
         
         //Camera config
         const float MOUSE_POS_WEIGHT = 0.35f, MAX_CAMERA_DIST_FROM_PLAYER = 5f;
+
+        //Tooltip stuff
+        private Transform tooltipHolder;
+        private TMP_Text tooltipTextElement;
+        /// <summary>
+        /// Set this to change the tooltip text
+        /// </summary>
+        public string TooltipText
+        {
+            get => tooltipTextElement.text;
+            set => tooltipTextElement.text = value;
+        }
+
+        public static event Action OnInteract; 
 
         // Start is called before the first frame update
         void Start()
@@ -40,6 +55,13 @@ namespace Assets.Src.Components.Gameplay {
 
             if (IsServer)
                 SetAccountIdClientRpc(SaveManager.ServerId, Utils.OnlySendRpcTo(OwnerClientId));
+
+            if(IsOwner)
+            {
+                Instance = this;
+
+                FindReferences();
+            }
         }
 
         //OnNetworkSpawn must be overridden and public in order to run when the NetworkObject is spawned
@@ -48,6 +70,15 @@ namespace Assets.Src.Components.Gameplay {
             base.OnNetworkSpawn();
 
             Utils.Log("Player spawned on network");
+        }
+
+        /// <summary>
+        /// Finds the tooltip holder and text element
+        /// </summary>
+        private void FindReferences()
+        {
+            tooltipHolder = GameObject.FindGameObjectWithTag("TooltipHolder").transform;
+            tooltipTextElement = tooltipHolder.GetComponentInChildren<TMP_Text>();
         }
 
         [ClientRpc]
@@ -72,76 +103,45 @@ namespace Assets.Src.Components.Gameplay {
         {
             if(IsLocalPlayer)
             {
-                SendUserInputs();
-                PositionCamera();
-            }
-
-            if (IsServer)
                 HandleUserInputs();
-        }
+                PositionCamera();
 
-        void SendUserInputs()
-        {
-            List<KeyCode> inputs = new();
-
-            if (Input.GetKey(KeyCode.W))
-                inputs.Add(KeyCode.W);
-
-            if (Input.GetKey(KeyCode.A))
-                inputs.Add(KeyCode.A);
-
-            if (Input.GetKey(KeyCode.S))
-                inputs.Add(KeyCode.S);
-
-            if (Input.GetKey(KeyCode.D))
-                inputs.Add(KeyCode.D);
-
-            if (inputs.Count > 0)
-                SetUserInputsServerRpc(inputs.ToArray());
-        }
-
-        [ServerRpc]
-        void SetUserInputsServerRpc(KeyCode[] inputs)
-        {
-            userInputs = inputs;
+                if (tooltipHolder != null)
+                    //Update tooltip position to stay with mouse
+                    tooltipHolder.position = Input.mousePosition;
+            }
         }
 
         void HandleUserInputs()
         {
-                Vector2 movement = Vector2.zero;
+            Vector2 movement = Vector2.zero;
 
-                //Handle each input
-                foreach (KeyCode input in userInputs)
-                {
-                    switch (input)
-                    {
-                        case KeyCode.W:
-                            movement += Vector2.up;
-                            break;
-                        case KeyCode.A:
-                            movement += Vector2.left;
-                            break;
-                        case KeyCode.S:
-                            movement += Vector2.down;
-                            break;
-                        case KeyCode.D:
-                            movement += Vector2.right;
-                            break;
-                    }
-                }
+            //Read movement inputs
+            if(Input.GetKey(KeyCode.W))
+                movement += Vector2.up;
+            if (Input.GetKey(KeyCode.A))
+                movement += Vector2.left;
+            if (Input.GetKey(KeyCode.S))
+                movement += Vector2.down;
+            if (Input.GetKey(KeyCode.D))
+                movement += Vector2.right;
 
-                //Adjust movement for diagonal
-                if (movement.y != 0 && movement.x != 0)
-                {
-                    movement /= Mathf.Sqrt(2);
-                }
+            //Read interaction inputs
+            //Mouse 0 is left click, 1 is right click
+            if(Input.GetMouseButtonDown(1))
+                OnInteract?.Invoke();
+
+            //Adjust movement for diagonal
+            if (movement.y != 0 && movement.x != 0)
+            {
+                movement /= Mathf.Sqrt(2);
+            }
 
             try
             {
                 //Apply movement
                 if (movement != Vector2.zero)
                 {
-                    print($"Player.Value: {player.Value}, Speed: {player.Value?.Speed}");
                     movement *= player.Value.Speed * BASE_SPEED * Time.deltaTime;
                     rigidbody.MovePosition(rigidbody.position + movement);
                 }
@@ -150,9 +150,6 @@ namespace Assets.Src.Components.Gameplay {
             {
                 Utils.Log(e, "Error handling user inputs");
             }
-
-            //Reset inputs
-            userInputs = Array.Empty<KeyCode>();
         }
 
         void PositionCamera()

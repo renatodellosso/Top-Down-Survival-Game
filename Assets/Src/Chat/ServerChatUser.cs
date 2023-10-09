@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace Assets.Src.Chat
 {
-    internal class SystemChatUser : IChatUser
+    internal class ServerChatUser : IChatUser
     {
-        public string Name => "System";
+        public string Name => "Server";
 
         string IChatUser.FormatMessage(ChatMessage message)
         {

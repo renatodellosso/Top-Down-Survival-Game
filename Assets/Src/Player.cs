@@ -14,7 +14,8 @@ namespace Assets.Src
 
         public string Id { get; protected set; }
 
-        public float Speed { get; protected set; }
+        private float speed;
+        public float Speed { get => speed; protected set => speed = value; }
 
 
         public Player() { } //Needed for serialization
@@ -30,8 +31,6 @@ namespace Assets.Src
         {
             //DO NOT SERIALIZE ID!!
 
-            //I hate this and there's gotta be a better way to do it
-            float speed = Speed;
             serializer.SerializeValue(ref speed);
         }
     }

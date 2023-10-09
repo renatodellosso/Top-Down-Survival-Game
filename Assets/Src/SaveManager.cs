@@ -283,11 +283,13 @@ namespace Assets.Src
             if (!accounts.TryGetValue(serverId, out Guid guid))
             {
                 guid = Guid.NewGuid();
+
                 accounts.Add(serverId, guid);
                 SaveObj(accounts, "accounts.dat", false);
             }
 
-            byte[] hash = SHA256.ComputeHash(Encoding.UTF8.GetBytes(guid.ToString()));
+            //We have to replace slashes, because the file system will interpret them as directories
+            byte[] hash = SHA256.ComputeHash(Encoding.UTF8.GetBytes(guid.ToString().Replace("\\","")));
             return Convert.ToBase64String(hash);
         }
 

@@ -5,6 +5,7 @@ TagManager:
   serializedVersion: 2
   tags:
   - Transition
+  - TooltipHolder
   layers:
   - Default
   - TransparentFX

@@ -1,4 +1,4 @@
-using Assets.Src.Components.Misc;
+using Assets.Src.Components.Base;
 using UnityEngine;
 
 namespace Assets.Src.Components.Menus

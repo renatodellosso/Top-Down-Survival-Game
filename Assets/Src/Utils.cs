@@ -1,10 +1,13 @@
-﻿using System;
+﻿using Assets.Src.Components.Base;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Numerics;
 using System.Threading;
 using System.Threading.Tasks;
 using Unity.Netcode;
+using UnityEngine;
 
 #nullable enable
 namespace Assets.Src
@@ -12,7 +15,7 @@ namespace Assets.Src
     public static class Utils
     {
 
-        private static readonly Random Random = new(Seed: DateTimeOffset.Now.Millisecond);
+        private static readonly System.Random Random = new(Seed: DateTimeOffset.Now.Millisecond);
 
         public static void Log(string msg)
         {
@@ -102,5 +105,40 @@ namespace Assets.Src
             };
         }
 
+        public static GameObject GetMainCanvas()
+        {
+            return GameObject.FindGameObjectWithTag("MainCanvas");
+        }
+
+        private static Fadeable GetFader()
+        {
+            IEnumerable<Fadeable> fadeables = GameObject.FindObjectsByType<Fadeable>(FindObjectsInactive.Include, FindObjectsSortMode.InstanceID);
+            return fadeables.Where(f => f.name == "Fader").First();
+        }
+
+        private const float FADE_TIME = 1f;
+
+        /// <summary>
+        /// Fade the screen in from black
+        /// </summary>
+        public static void FadeScreenIn()
+        {
+            Fadeable fader = GetFader();
+            fader.gameObject.SetActive(true);
+            fader.FadeOut(FADE_TIME);
+        }
+
+        /// <summary>
+        /// Fades the screen out to black
+        /// </summary>
+        public static void FadeScreenOut()
+        {
+            GetFader().FadeIn(FADE_TIME);
+        }
+
+        public static void MakeScreenBlack()
+        {
+            GetFader().gameObject.SetActive(true);
+        }
     }
 }

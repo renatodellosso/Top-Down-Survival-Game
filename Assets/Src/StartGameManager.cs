@@ -131,10 +131,10 @@ namespace Assets.Src
                 yield break;
             }
 
-            networkManager.OnClientConnectedCallback += (id) => ChatManager.Send("New client connected!");
+            networkManager.OnClientConnectedCallback += (id) => ChatManager.SendMsg("New client connected!");
 
             //Set up the game world
-            ChatManager.Send("Game loaded!");
+            ChatManager.SendMsg("Game loaded!");
             loadingScreen.FadeOut(onFadeComplete: CleanUp);
         }
         
@@ -253,9 +253,9 @@ namespace Assets.Src
             Utils.Log($"Server started!{(multiplayer ? " Join Code: " + joinCode : "")}");
             LoadingMessage = "Server started!";
 
-            ChatManager.Send("Server started!");
+            ChatManager.SendMsg("Server started!");
             if (joinCode != null)
-                ChatManager.Send($"Your session join code is {Utils.FormatText(joinCode, "yellow")}");
+                ChatManager.SendMsg($"Your session join code is {Utils.FormatText(joinCode, "yellow")}");
         }
 
     }

@@ -1,6 +1,4 @@
-using Assets.Src.Components.Misc;
-using System.Collections;
-using System.Collections.Generic;
+using Assets.Src.Components.Base;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;

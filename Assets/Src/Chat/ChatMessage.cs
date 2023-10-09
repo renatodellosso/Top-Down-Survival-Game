@@ -3,21 +3,40 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Unity.Netcode;
 
 #nullable enable
 namespace Assets.Src.Chat
 {
-    public class ChatMessage : IFormattable
+    public class ChatMessage : IFormattable, INetworkSerializable
     {
         
-        static readonly SystemChatUser SystemChatUser = new();
+        static readonly ServerChatUser SystemChatUser = new();
 
-        public string Text { get; protected set; }
+        private string text;
+        public string Text { 
+            get
+            {
+                return text;
+            }
+            private set
+            {
+                text = value;
+            }
+        }
+
         public IChatUser Sender { get; protected set; }
+
+        //For deserialization
+        public ChatMessage()
+        {
+            text = "";
+            Sender = SystemChatUser;
+        }
 
         public ChatMessage(IChatUser sender, string text)
         {
-            Text = text;
+            this.text = text;
             Sender = sender;
         }
 
@@ -31,6 +50,11 @@ namespace Assets.Src.Chat
         public string ToString(string format, IFormatProvider formatProvider)
         {
             return ToString();
+        }
+
+        public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
+        {
+            serializer.SerializeValue(ref text);
         }
     }
 }
